@@ -1,31 +1,27 @@
 <template>
   <router-link 
     :to="{ name: 'CategoryDetail', params: { slug: category.slug } }"
-    class="card group cursor-pointer"
+    class="catalog-tile group cursor-pointer p-0"
   >
-    <div class="aspect-w-16 aspect-h-9 mb-4 bg-gray-200 rounded-md overflow-hidden">
+    <div class="aspect-[4/3] bg-ink-700 overflow-hidden">
       <img 
         v-if="category.image_url" 
         :src="category.image_url" 
         :alt="category.name"
-        class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
       />
-      <div v-else class="flex items-center justify-center h-48 bg-gradient-to-br from-primary to-blue-400">
-        <span class="text-4xl font-bold text-white">{{ category.name.charAt(0) }}</span>
+      <div v-else class="flex items-center justify-center h-full bg-gradient-to-br from-ink-700 to-ink-800">
+        <span class="text-4xl font-display text-primary/40">{{ category.name.charAt(0) }}</span>
       </div>
     </div>
     
-    <h3 class="text-xl font-semibold text-gray-900 mb-2 group-hover:text-primary transition-colors">
-      {{ category.name }}
-    </h3>
-    
-    <p class="text-gray-600 text-sm mb-4">
-      {{ truncateText(category.description, 120) }}
-    </p>
-    
-    <div class="flex items-center justify-between text-sm text-gray-500">
-      <span>{{ category.item_count || 0 }} items</span>
-      <span class="text-primary font-medium">View →</span>
+    <div class="border-t-2 border-primary/70 p-4">
+      <h3 class="text-xl font-display text-primary mb-1 group-hover:text-accent transition-colors">
+        {{ category.name }}
+      </h3>
+      <p class="text-primary/60 text-sm">
+        {{ truncateText(category.description, 120) }}
+      </p>
     </div>
   </router-link>
 </template>

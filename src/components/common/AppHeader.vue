@@ -1,76 +1,75 @@
 <template>
-  <header class="bg-white shadow-md">
-    <nav class="container mx-auto px-4 py-4">
-      <div class="flex items-center justify-between">
-        <!-- Logo -->
-        <router-link to="/" class="text-2xl font-bold text-primary">
-          Vue Catalog
-        </router-link>
+  <header class="sticky top-0 z-30 bg-ink-800/95 backdrop-blur border-b border-ink-600">
+    <div class="relative flex items-center px-3 py-3 md:px-5 md:py-4">
+      <!-- Back arrow (left) -->
+      <button
+        v-if="showBack"
+        type="button"
+        class="z-10 shrink-0 p-1 text-primary transition-colors hover:text-accent"
+        aria-label="Назад"
+        @click="goBack"
+      >
+        <svg class="h-7 w-7 md:h-8 md:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 5l-7 7 7 7" />
+        </svg>
+      </button>
+      <RouterLink
+        v-else
+        to="/"
+        class="z-10 shrink-0 p-1 text-primary transition-colors hover:text-accent"
+        aria-label="Главная"
+      >
+        <PyramidLogo class="h-8 w-8 md:h-9 md:w-9" />
+      </RouterLink>
 
-        <!-- Navigation Links -->
-        <div class="hidden md:flex items-center space-x-6">
-          <router-link to="/" class="nav-link">
-            Home
-          </router-link>
-          <router-link to="/categories" class="nav-link">
-            Categories
-          </router-link>
-          
-          <!-- Admin Link -->
-          <router-link 
-            v-if="isAdmin" 
-            to="/admin" 
-            class="nav-link"
-          >
-            Admin
-          </router-link>
-        </div>
+      <!-- Centered title -->
+      <h1
+        class="pointer-events-none absolute inset-x-0 mx-auto px-14 text-center font-display text-xl tracking-wide text-primary truncate md:text-3xl"
+      >
+        {{ title }}
+      </h1>
 
-        <!-- User Menu -->
-        <div class="flex items-center space-x-4">
-          <template v-if="isAuthenticated">
-            <span class="text-gray-700">{{ user?.username }}</span>
-            <button 
-              @click="handleLogout" 
-              class="btn-secondary"
-            >
-              Logout
-            </button>
-          </template>
-          <template v-else>
-            <router-link to="/login" class="btn-primary">
-              Login
-            </router-link>
-          </template>
-        </div>
-      </div>
-    </nav>
+      <!-- Hamburger (right) -->
+      <button
+        type="button"
+        class="z-10 ml-auto shrink-0 p-1 text-primary transition-colors hover:text-accent"
+        aria-label="Открыть меню"
+        @click="openMenu"
+      >
+        <svg class="h-7 w-7 md:h-8 md:w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
+    </div>
   </header>
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { useStore } from 'vuex'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
+import PyramidLogo from '@/components/common/PyramidLogo.vue'
+
+defineProps({
+  title: {
+    type: String,
+    default: 'Народная'
+  },
+  showBack: {
+    type: Boolean,
+    default: true
+  }
+})
 
 const store = useStore()
 const router = useRouter()
 
-const isAuthenticated = computed(() => store.getters['auth/isAuthenticated'])
-const isAdmin = computed(() => store.getters['auth/isAdmin'])
-const user = computed(() => store.getters['auth/currentUser'])
+const openMenu = () => store.commit('ui/SET_SIDEBAR', true)
 
-const handleLogout = async () => {
-  await store.dispatch('auth/logout')
+const goBack = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/')
+  }
 }
 </script>
-
-<style scoped>
-.nav-link {
-  @apply text-gray-700 hover:text-primary transition-colors;
-}
-
-.router-link-active {
-  @apply text-primary font-semibold;
-}
-</style>

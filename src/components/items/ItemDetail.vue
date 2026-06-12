@@ -1,95 +1,124 @@
 <template>
-  <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
-      <!-- Image -->
-      <div>
-        <div class="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden">
-          <img 
-            v-if="item.image_url" 
-            :src="item.image_url" 
-            :alt="item.name"
-            class="w-full h-full object-cover"
-          />
-          <div v-else class="flex items-center justify-center h-96 bg-gradient-to-br from-gray-300 to-gray-400">
-            <span class="text-6xl font-bold text-white">{{ item.name.charAt(0) }}</span>
-          </div>
+  <div class="container mx-auto px-3 py-5 md:px-6 md:py-8">
+    <!-- ===== Desktop layout: text panel (left) + image & buttons (right) ===== -->
+    <div class="hidden gap-8 lg:grid lg:grid-cols-2">
+      <!-- Left: bordered info panel with tabs at the bottom -->
+      <div class="flex flex-col rounded-2xl border-2 border-primary/70 bg-ink-800/40">
+        <div class="flex-1 overflow-y-auto p-6 text-[17px] leading-relaxed text-primary/90">
+          <p v-if="activeTab === 'description'" class="whitespace-pre-line">
+            {{ item.description || 'Описание отсутствует.' }}
+          </p>
+          <component :is="'div'" v-else>
+            <div v-if="hasCharacteristics" class="space-y-3">
+              <div
+                v-for="(value, key) in item.additional_data"
+                :key="key"
+                class="flex justify-between gap-4 border-b border-ink-600 pb-2"
+              >
+                <span class="text-primary/60">{{ key }}</span>
+                <span class="text-right font-medium text-primary">{{ formatValue(value) }}</span>
+              </div>
+            </div>
+            <p v-else class="text-primary/50">Характеристики отсутствуют.</p>
+          </component>
+        </div>
+
+        <!-- Tabs -->
+        <div class="grid grid-cols-2 gap-3 border-t border-ink-600 p-3">
+          <button
+            class="rounded-lg border px-4 py-3 font-display tracking-wide transition-colors"
+            :class="tabClass('characteristics')"
+            @click="activeTab = 'characteristics'"
+          >
+            Характеристика
+          </button>
+          <button
+            class="rounded-lg border px-4 py-3 font-display tracking-wide transition-colors"
+            :class="tabClass('description')"
+            @click="activeTab = 'description'"
+          >
+            Описание
+          </button>
         </div>
       </div>
 
-      <!-- Details -->
-      <div>
-        <div class="flex items-start justify-between mb-4">
-          <h1 class="text-3xl font-bold text-gray-900">
-            {{ item.name }}
-          </h1>
-          <span v-if="item.is_hidden" class="bg-red-500 text-white text-xs px-2 py-1 rounded">
-            Hidden
-          </span>
+      <!-- Right: image + Фото / Карта / Модель -->
+      <div class="flex flex-col items-center justify-center">
+        <div class="flex w-full flex-1 items-center justify-center">
+          <ItemMedia :item="item" :mode="mediaMode" />
         </div>
-
-        <p v-if="item.price" class="text-2xl font-bold text-primary mb-6">
-          {{ formatCurrency(item.price) }}
-        </p>
-
-        <div class="mb-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-2">Description</h2>
-          <p class="text-gray-600">
-            {{ item.description }}
-          </p>
-        </div>
-
-        <div class="mb-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-2">Category</h2>
-          <router-link 
-            v-if="item.category" 
-            :to="{ name: 'CategoryDetail', params: { slug: item.category.slug } }"
-            class="text-primary hover:underline"
-          >
-            {{ item.category.name }}
-          </router-link>
-        </div>
-
-        <div class="text-sm text-gray-500">
-          <p>Created: {{ formatDate(item.created_at, 'long') }}</p>
-          <p v-if="item.updated_at">Updated: {{ formatDate(item.updated_at, 'long') }}</p>
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <button :class="mediaMode === 'photo' ? 'pill-btn !bg-primary/10' : 'pill-btn'" @click="mediaMode = 'photo'">Фото</button>
+          <button :class="mediaMode === 'map' ? 'pill-btn !bg-primary/10' : 'pill-btn-muted'" @click="item.map_url && (mediaMode = 'map')">Карта</button>
+          <button :class="mediaMode === 'model' ? 'pill-btn !bg-primary/10' : 'pill-btn-muted'" @click="item.model_url && (mediaMode = 'model')">Модель</button>
         </div>
       </div>
     </div>
 
-    <!-- Additional Data Table -->
-    <div v-if="hasAdditionalData" class="border-t border-gray-200 p-8">
-      <h2 class="text-xl font-semibold text-gray-900 mb-4">Additional Information</h2>
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Field
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Value
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="(value, key) in item.additional_data" :key="key">
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {{ key }}
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600">
-                {{ formatValue(value) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- ===== Mobile layout: image, buttons, then info panel with tabs ===== -->
+    <div class="space-y-5 lg:hidden">
+      <div class="flex items-center justify-center">
+        <ItemMedia :item="item" :mode="mediaMode" />
       </div>
+
+      <div class="flex flex-wrap justify-center gap-3">
+        <button :class="mediaMode === 'photo' ? 'pill-btn !bg-primary/10' : 'pill-btn'" @click="mediaMode = 'photo'">Фото</button>
+        <button :class="mediaMode === 'map' ? 'pill-btn !bg-primary/10' : 'pill-btn-muted'" @click="item.map_url && (mediaMode = 'map')">Карта</button>
+        <button :class="mediaMode === 'model' ? 'pill-btn !bg-primary/10' : 'pill-btn-muted'" @click="item.model_url && (mediaMode = 'model')">Модель</button>
+      </div>
+
+      <div class="flex flex-col rounded-2xl border-2 border-primary/70 bg-ink-800/40">
+        <div class="p-5 text-base leading-relaxed text-primary/90">
+          <p v-if="activeTab === 'description'" class="whitespace-pre-line">
+            {{ item.description || 'Описание отсутствует.' }}
+          </p>
+          <div v-else>
+            <div v-if="hasCharacteristics" class="space-y-3">
+              <div
+                v-for="(value, key) in item.additional_data"
+                :key="key"
+                class="flex justify-between gap-4 border-b border-ink-600 pb-2"
+              >
+                <span class="text-primary/60">{{ key }}</span>
+                <span class="text-right font-medium text-primary">{{ formatValue(value) }}</span>
+              </div>
+            </div>
+            <p v-else class="text-primary/50">Характеристики отсутствуют.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 border-t border-ink-600 p-2.5">
+          <button class="rounded-lg border px-3 py-2.5 font-display text-sm tracking-wide transition-colors" :class="tabClass('characteristics')" @click="activeTab = 'characteristics'">
+            Характер-ка
+          </button>
+          <button class="rounded-lg border px-3 py-2.5 font-display text-sm tracking-wide transition-colors" :class="tabClass('description')" @click="activeTab = 'description'">
+            Описание
+          </button>
+        </div>
+      </div>
+
+      <!-- Category link -->
+      <div v-if="item.category" class="text-center text-sm text-primary/60">
+        Категория:
+        <RouterLink :to="{ name: 'CategoryDetail', params: { slug: item.category.slug } }" class="text-primary hover:text-accent">
+          {{ item.category.name }}
+        </RouterLink>
+      </div>
+    </div>
+
+    <!-- Category link (desktop) -->
+    <div v-if="item.category" class="mt-6 hidden text-sm text-primary/60 lg:block">
+      Категория:
+      <RouterLink :to="{ name: 'CategoryDetail', params: { slug: item.category.slug } }" class="text-primary hover:text-accent">
+        {{ item.category.name }}
+      </RouterLink>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { formatDate, formatCurrency } from '@/utils/formatters'
+import { computed, ref } from 'vue'
+import { RouterLink } from 'vue-router'
+import ItemMedia from '@/components/items/ItemMedia.vue'
 
 const props = defineProps({
   item: {
@@ -98,15 +127,18 @@ const props = defineProps({
   }
 })
 
-const hasAdditionalData = computed(() => {
-  return props.item.additional_data && 
-         Object.keys(props.item.additional_data).length > 0
-})
+const activeTab = ref('description')
+const mediaMode = ref('photo')
 
-const formatValue = (value) => {
-  if (typeof value === 'object') {
-    return JSON.stringify(value)
-  }
-  return value
-}
+const hasCharacteristics = computed(() =>
+  props.item.additional_data && Object.keys(props.item.additional_data).length > 0
+)
+
+const tabClass = (tab) =>
+  activeTab.value === tab
+    ? 'border-primary bg-primary/10 text-primary'
+    : 'border-ink-600 text-primary/40 hover:text-primary/70'
+
+const formatValue = (value) =>
+  typeof value === 'object' ? JSON.stringify(value) : value
 </script>

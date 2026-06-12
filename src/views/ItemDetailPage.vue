@@ -1,26 +1,21 @@
 <template>
-  <div class="min-h-screen flex flex-col">
-    <AppHeader />
-    
-    <main class="flex-1 container mx-auto px-4 py-8">
-      <LoadingSpinner v-if="loading" full-screen />
-      <ErrorMessage v-else-if="error" :message="error" />
-      
+  <div class="flex min-h-screen flex-col bg-ink-900">
+    <AppHeader :title="headerTitle" />
+
+    <main class="flex-1">
+      <LoadingSpinner v-if="loading" full-screen color="primary" />
+      <div v-else-if="error" class="container mx-auto px-4 py-8">
+        <ErrorMessage :message="error" />
+      </div>
+
       <div v-else-if="currentItem">
-        <!-- Admin Actions -->
-        <div v-if="isAdmin" class="mb-6 flex justify-end space-x-2">
-          <button @click="handleEdit" class="btn-secondary">
-            Edit Item
+        <!-- Admin actions -->
+        <div v-if="isAdmin" class="container mx-auto flex justify-end gap-2 px-4 pt-4">
+          <button @click="handleEdit" class="btn-secondary">Изменить</button>
+          <button @click="handleToggleVisibility" class="btn-secondary">
+            {{ currentItem.is_hidden ? 'Показать' : 'Скрыть' }}
           </button>
-          <button 
-            @click="handleToggleVisibility" 
-            class="btn-secondary"
-          >
-            {{ currentItem.is_hidden ? 'Show' : 'Hide' }} Item
-          </button>
-          <button @click="handleDelete" class="btn-danger">
-            Delete Item
-          </button>
+          <button @click="handleDelete" class="btn-danger">Удалить</button>
         </div>
 
         <ItemDetail :item="currentItem" />
@@ -33,7 +28,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppFooter from '@/components/common/AppFooter.vue'
@@ -51,43 +46,44 @@ const { currentItem, loading, error, fetchItemBySlug, deleteItem, toggleItemVisi
 const { isAdmin } = useAuth()
 const { showSuccess, showError, showConfirmDialog } = useNotification()
 
-onMounted(async () => {
-  const slug = route.params.slug
-  await fetchItemBySlug(slug)
+const headerTitle = computed(() => currentItem.value?.name || 'Народная')
+
+onMounted(() => fetchItemBySlug(route.params.slug))
+
+watch(() => route.params.slug, (slug) => {
+  if (slug) fetchItemBySlug(slug)
 })
 
 const handleEdit = () => {
-  showError('Edit functionality to be implemented in admin dashboard')
+  showError('Редактирование доступно в панели администратора')
 }
 
 const handleToggleVisibility = async () => {
   const newStatus = !currentItem.value.is_hidden
   const result = await toggleItemVisibility(currentItem.value.slug, newStatus)
-  
   if (result.success) {
-    showSuccess(`Item ${newStatus ? 'hidden' : 'shown'} successfully`)
+    showSuccess(`Объект ${newStatus ? 'скрыт' : 'показан'}`)
     await fetchItemBySlug(currentItem.value.slug)
   } else {
-    showError(result.error || 'Failed to update item visibility')
+    showError(result.error || 'Не удалось изменить видимость')
   }
 }
 
 const handleDelete = async () => {
   const confirmed = await showConfirmDialog({
-    title: 'Delete Item',
-    message: `Are you sure you want to delete "${currentItem.value.name}"? This action cannot be undone.`,
-    confirmText: 'Delete',
-    cancelText: 'Cancel'
+    title: 'Удалить объект',
+    message: `Вы уверены, что хотите удалить «${currentItem.value.name}»? Это действие необратимо.`,
+    confirmText: 'Удалить',
+    cancelText: 'Отмена'
   })
-  
+
   if (confirmed) {
     const result = await deleteItem(currentItem.value.slug)
-    
     if (result.success) {
-      showSuccess('Item deleted successfully')
+      showSuccess('Объект удалён')
       router.push({ name: 'Home' })
     } else {
-      showError(result.error || 'Failed to delete item')
+      showError(result.error || 'Не удалось удалить объект')
     }
   }
 }

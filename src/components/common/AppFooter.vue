@@ -1,45 +1,12 @@
 <template>
-  <footer class="bg-secondary text-white mt-auto">
-    <div class="container mx-auto px-4 py-8">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <!-- About Section -->
-        <div>
-          <h3 class="text-xl font-bold mb-4">Vue Catalog</h3>
-          <p class="text-gray-300">
-            A modern catalog application built with Vue 3, Vuex, and Tailwind CSS.
-          </p>
-        </div>
-
-        <!-- Quick Links -->
-        <div>
-          <h3 class="text-xl font-bold mb-4">Quick Links</h3>
-          <ul class="space-y-2">
-            <li>
-              <router-link to="/" class="text-gray-300 hover:text-white transition-colors">
-                Home
-              </router-link>
-            </li>
-            <li>
-              <router-link to="/categories" class="text-gray-300 hover:text-white transition-colors">
-                Categories
-              </router-link>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Contact -->
-        <div>
-          <h3 class="text-xl font-bold mb-4">Contact</h3>
-          <p class="text-gray-300">
-            Email: info@vuecatalog.com<br>
-            Phone: (555) 123-4567
-          </p>
-        </div>
+  <footer class="mt-auto border-t border-ink-600 bg-ink-800 text-primary/70">
+    <div class="container mx-auto flex flex-col items-center gap-2 px-4 py-6 text-center">
+      <div class="flex items-center gap-3">
+        <router-link to="/categories" class="font-display text-sm tracking-wide hover:text-accent">Категории</router-link>
+        <span class="text-primary/30">·</span>
+        <router-link to="/" class="font-display text-sm tracking-wide hover:text-accent">Главная</router-link>
       </div>
-
-      <div class="border-t border-gray-600 mt-8 pt-8 text-center text-gray-400">
-        <p>&copy; {{ currentYear }} Vue Catalog. All rights reserved.</p>
-      </div>
+      <p class="text-xs text-primary/40">&copy; {{ currentYear }} Народная · Каталог</p>
     </div>
   </footer>
 </template>

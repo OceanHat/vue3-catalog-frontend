@@ -4,7 +4,7 @@
       class="animate-spin rounded-full border-t-2 border-b-2"
       :class="[sizeClass, colorClass]"
     ></div>
-    <span v-if="message" class="ml-3 text-gray-600">{{ message }}</span>
+    <span v-if="message" class="ml-3 text-primary/70">{{ message }}</span>
   </div>
 </template>
 
@@ -42,7 +42,12 @@ const sizeClass = computed(() => {
 })
 
 const colorClass = computed(() => {
-  return `border-${props.color}`
+  const colors = {
+    primary: 'border-primary',
+    accent: 'border-accent',
+    white: 'border-white'
+  }
+  return colors[props.color] || 'border-primary'
 })
 
 const containerClass = computed(() => {

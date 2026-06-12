@@ -3,7 +3,7 @@
     <LoadingSpinner v-if="loading" />
     <ErrorMessage v-else-if="error" :message="error" />
     
-    <div v-else-if="categories.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-else-if="categories.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
       <CategoryCard 
         v-for="category in categories" 
         :key="category.id" 
@@ -12,7 +12,7 @@
     </div>
     
     <div v-else class="text-center py-12">
-      <p class="text-gray-500 text-lg">No categories found</p>
+      <p class="text-primary/50 font-display text-lg">Категории не найдены</p>
     </div>
   </div>
 </template>
