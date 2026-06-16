@@ -62,7 +62,7 @@ import { useNotification } from '@/composables/useNotification'
 const route = useRoute()
 const router = useRouter()
 const { currentCategory, loading: categoryLoading, error: categoryError, fetchCategoryBySlug, deleteCategory } = useCategories()
-const { items, loading: itemsLoading, error: itemsError, setFilters } = useItems()
+const { items, loading: itemsLoading, error: itemsError, fetchItemsByCategory } = useItems()
 const { isAdmin } = useAuth()
 const { showSuccess, showError, showConfirmDialog } = useNotification()
 
@@ -70,7 +70,9 @@ const headerTitle = computed(() => currentCategory.value?.name || 'Народн�
 
 const load = async (slug) => {
   await fetchCategoryBySlug(slug)
-  setFilters({ category: slug })
+  if (currentCategory.value?.id) {
+    await fetchItemsByCategory(currentCategory.value.id)
+  }
 }
 
 onMounted(() => load(route.params.slug))
@@ -93,7 +95,7 @@ const handleDelete = async () => {
   })
 
   if (confirmed) {
-    const result = await deleteCategory(currentCategory.value.slug)
+    const result = await deleteCategory(currentCategory.value.id)
     if (result.success) {
       showSuccess('Категория удалена')
       router.push({ name: 'CategoryList' })

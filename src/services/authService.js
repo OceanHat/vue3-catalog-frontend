@@ -1,33 +1,24 @@
 import api from './api'
 
+/**
+ * Auth service mapped to ugra-back's /api/auth endpoints.
+ * - POST /auth/login    { email, password } -> { access_token, refresh_token, token_type }
+ * - POST /auth/refresh  { refresh_token }    -> { access_token, refresh_token, token_type }
+ * - GET  /auth/me                            -> { id, email, full_name, role, is_active }
+ */
 export default {
   async login(credentials) {
-    const response = await api.post('/auth/login', credentials)
-    return response
+    return api.post('/auth/login', {
+      email: credentials.email,
+      password: credentials.password
+    })
   },
 
-  async register(userData) {
-    const response = await api.post('/auth/register', userData)
-    return response
-  },
-
-  async logout() {
-    const response = await api.post('/auth/logout')
-    return response
-  },
-
-  async refreshToken() {
-    const response = await api.post('/auth/refresh')
-    return response
+  async refreshToken(refreshToken) {
+    return api.post('/auth/refresh', { refresh_token: refreshToken })
   },
 
   async getCurrentUser() {
-    const response = await api.get('/auth/me')
-    return response
-  },
-
-  async updateProfile(userData) {
-    const response = await api.put('/auth/profile', userData)
-    return response
+    return api.get('/auth/me')
   }
 }

@@ -2,26 +2,22 @@ import itemService from '@/services/itemService'
 
 export default {
   namespaced: true,
-  
+
   state: () => ({
     items: [],
     currentItem: null,
     loading: false,
     error: null,
     pagination: {
-      page: 1,
-      perPage: 12,
-      total: 0,
-      totalPages: 0
+      skip: 0,
+      limit: 100,
+      total: 0
     },
     filters: {
-      category: null,
-      search: '',
-      sortBy: 'created_at',
-      sortOrder: 'desc'
+      categoryId: null
     }
   }),
-  
+
   getters: {
     items: (state) => state.items,
     currentItem: (state) => state.currentItem,
@@ -29,82 +25,55 @@ export default {
     error: (state) => state.error,
     pagination: (state) => state.pagination,
     filters: (state) => state.filters,
-    visibleItems: (state) => state.items.filter(item => !item.is_hidden)
+    visibleItems: (state) => state.items.filter((i) => !i.is_hidden)
   },
-  
+
   mutations: {
     SET_ITEMS(state, items) {
       state.items = items
     },
-    
     SET_CURRENT_ITEM(state, item) {
       state.currentItem = item
     },
-    
     SET_LOADING(state, loading) {
       state.loading = loading
     },
-    
     SET_ERROR(state, error) {
       state.error = error
     },
-    
     SET_PAGINATION(state, pagination) {
       state.pagination = { ...state.pagination, ...pagination }
     },
-    
     SET_FILTERS(state, filters) {
       state.filters = { ...state.filters, ...filters }
     },
-    
-    ADD_ITEM(state, item) {
-      state.items.unshift(item)
+    UPDATE_ITEM(state, updated) {
+      const index = state.items.findIndex((i) => i.id === updated.id)
+      if (index !== -1) state.items.splice(index, 1, updated)
+      if (state.currentItem?.id === updated.id) state.currentItem = updated
     },
-    
-    UPDATE_ITEM(state, updatedItem) {
-      const index = state.items.findIndex(item => item.slug === updatedItem.slug)
-      if (index !== -1) {
-        state.items.splice(index, 1, updatedItem)
-      }
-      if (state.currentItem?.slug === updatedItem.slug) {
-        state.currentItem = updatedItem
-      }
-    },
-    
-    DELETE_ITEM(state, slug) {
-      state.items = state.items.filter(item => item.slug !== slug)
-      if (state.currentItem?.slug === slug) {
-        state.currentItem = null
-      }
+    DELETE_ITEM(state, id) {
+      state.items = state.items.filter((i) => i.id !== id)
+      if (state.currentItem?.id === id) state.currentItem = null
     }
   },
-  
+
   actions: {
     async fetchItems({ commit, state }, params = {}) {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
-      
       try {
-        const queryParams = {
-          page: params.page || state.pagination.page,
-          per_page: params.perPage || state.pagination.perPage,
-          category: state.filters.category,
-          search: state.filters.search,
-          sort_by: state.filters.sortBy,
-          sort_order: state.filters.sortOrder,
-          ...params
-        }
-        
-        const response = await itemService.getItems(queryParams)
-        
-        commit('SET_ITEMS', response.items || response.data || [])
-        commit('SET_PAGINATION', {
-          page: response.page || 1,
-          perPage: response.per_page || 12,
-          total: response.total || 0,
-          totalPages: response.total_pages || 0
+        const response = await itemService.getItems({
+          skip: params.skip ?? state.pagination.skip,
+          limit: params.limit ?? state.pagination.limit,
+          categoryId: params.categoryId !== undefined ? params.categoryId : state.filters.categoryId
         })
-        
+        commit('SET_ITEMS', response.items || [])
+        commit('SET_PAGINATION', {
+          skip: response.skip ?? 0,
+          limit: response.limit ?? state.pagination.limit,
+          total: response.total ?? 0
+        })
         return response
       } catch (error) {
         commit('SET_ERROR', error.message)
@@ -113,11 +82,10 @@ export default {
         commit('SET_LOADING', false)
       }
     },
-    
+
     async fetchItemBySlug({ commit }, slug) {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
-      
       try {
         const item = await itemService.getItemBySlug(slug)
         commit('SET_CURRENT_ITEM', item)
@@ -129,68 +97,34 @@ export default {
         commit('SET_LOADING', false)
       }
     },
-    
+
     async createItem({ commit }, itemData) {
-      commit('SET_LOADING', true)
-      commit('SET_ERROR', null)
-      
-      try {
-        const item = await itemService.createItem(itemData)
-        commit('ADD_ITEM', item)
-        return item
-      } catch (error) {
-        commit('SET_ERROR', error.message)
-        throw error
-      } finally {
-        commit('SET_LOADING', false)
-      }
+      const item = await itemService.createItem(itemData)
+      return item
     },
-    
-    async updateItem({ commit }, { slug, itemData }) {
-      commit('SET_LOADING', true)
-      commit('SET_ERROR', null)
-      
-      try {
-        const item = await itemService.updateItem(slug, itemData)
-        commit('UPDATE_ITEM', item)
-        return item
-      } catch (error) {
-        commit('SET_ERROR', error.message)
-        throw error
-      } finally {
-        commit('SET_LOADING', false)
-      }
+
+    async updateItem({ commit }, { id, itemData }) {
+      const item = await itemService.updateItem(id, itemData)
+      commit('UPDATE_ITEM', item)
+      return item
     },
-    
-    async deleteItem({ commit }, slug) {
-      commit('SET_LOADING', true)
-      commit('SET_ERROR', null)
-      
-      try {
-        await itemService.deleteItem(slug)
-        commit('DELETE_ITEM', slug)
-      } catch (error) {
-        commit('SET_ERROR', error.message)
-        throw error
-      } finally {
-        commit('SET_LOADING', false)
-      }
+
+    async deleteItem({ commit }, id) {
+      await itemService.deleteItem(id)
+      commit('DELETE_ITEM', id)
     },
-    
-    async toggleItemVisibility({ commit }, { slug, isHidden }) {
-      try {
-        const item = await itemService.toggleItemVisibility(slug, isHidden)
-        commit('UPDATE_ITEM', item)
-        return item
-      } catch (error) {
-        commit('SET_ERROR', error.message)
-        throw error
-      }
+
+    async toggleItemVisibility({ commit }, { id, isHidden }) {
+      const item = await itemService.setItemHidden(id, isHidden)
+      commit('UPDATE_ITEM', item)
+      return item
     },
-    
-    setFilters({ commit, dispatch }, filters) {
-      commit('SET_FILTERS', filters)
-      dispatch('fetchItems', { page: 1 })
+
+    // Set the active category filter and reload items for that category.
+    async setCategoryFilter({ commit, dispatch }, categoryId) {
+      commit('SET_FILTERS', { categoryId })
+      commit('SET_PAGINATION', { skip: 0 })
+      return dispatch('fetchItems', { skip: 0, categoryId })
     }
   }
 }

@@ -36,18 +36,18 @@ export function useCategories() {
     }
   }
 
-  const updateCategory = async (slug, categoryData) => {
+  const updateCategory = async (id, categoryData) => {
     try {
-      await store.dispatch('categories/updateCategory', { slug, categoryData })
+      await store.dispatch('categories/updateCategory', { id, categoryData })
       return { success: true }
     } catch (err) {
       return { success: false, error: err.message }
     }
   }
 
-  const deleteCategory = async (slug) => {
+  const deleteCategory = async (id) => {
     try {
-      await store.dispatch('categories/deleteCategory', slug)
+      await store.dispatch('categories/deleteCategory', id)
       return { success: true }
     } catch (err) {
       return { success: false, error: err.message }

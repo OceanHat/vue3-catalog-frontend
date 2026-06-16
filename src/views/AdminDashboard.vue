@@ -64,7 +64,7 @@
           :loading="itemsLoading" 
           :error="itemsError"
           :show-admin-actions="true"
-          :pagination="pagination"
+          :pagination="listPagination"
           @edit="handleEditItem"
           @delete="handleDeleteItem"
           @toggle-visibility="handleToggleItemVisibility"
@@ -111,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppFooter from '@/components/common/AppFooter.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
@@ -154,6 +154,16 @@ const {
 
 const { showSuccess, showError, showConfirmDialog } = useNotification()
 
+// Adapt the backend's skip/limit/total pagination to the page-based shape ItemList expects.
+const listPagination = computed(() => {
+  const { skip = 0, limit = 100, total = 0 } = pagination.value || {}
+  const safeLimit = limit || 100
+  return {
+    page: Math.floor(skip / safeLimit) + 1,
+    totalPages: Math.max(1, Math.ceil(total / safeLimit))
+  }
+})
+
 onMounted(async () => {
   await Promise.all([
     fetchItems(),
@@ -167,7 +177,7 @@ const handleItemSubmit = async (itemData) => {
   
   let result
   if (editingItem.value) {
-    result = await updateItem(editingItem.value.slug, itemData)
+    result = await updateItem(editingItem.value.id, itemData)
   } else {
     result = await createItem(itemData)
   }
@@ -198,7 +208,7 @@ const handleDeleteItem = async (item) => {
   })
   
   if (confirmed) {
-    const result = await deleteItem(item.slug)
+    const result = await deleteItem(item.id)
     
     if (result.success) {
       showSuccess('Item deleted successfully')
@@ -211,7 +221,7 @@ const handleDeleteItem = async (item) => {
 
 const handleToggleItemVisibility = async (item) => {
   const newStatus = !item.is_hidden
-  const result = await toggleItemVisibility(item.slug, newStatus)
+  const result = await toggleItemVisibility(item.id, newStatus)
   
   if (result.success) {
     showSuccess(`Item ${newStatus ? 'hidden' : 'shown'} successfully`)
@@ -222,7 +232,8 @@ const handleToggleItemVisibility = async (item) => {
 }
 
 const handlePageChange = async (page) => {
-  await fetchItems({ page })
+  const limit = pagination.value?.limit || 100
+  await fetchItems({ skip: (page - 1) * limit, limit })
 }
 
 // Category handlers
@@ -231,7 +242,7 @@ const handleCategorySubmit = async (categoryData) => {
   
   let result
   if (editingCategory.value) {
-    result = await updateCategory(editingCategory.value.slug, categoryData)
+    result = await updateCategory(editingCategory.value.id, categoryData)
   } else {
     result = await createCategory(categoryData)
   }

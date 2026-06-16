@@ -97,33 +97,51 @@
       </div>
 
       <!-- Category link -->
-      <div v-if="item.category" class="text-center text-sm text-primary/60">
+      <div v-if="itemCategory" class="text-center text-sm text-primary/60">
         Категория:
-        <RouterLink :to="{ name: 'CategoryDetail', params: { slug: item.category.slug } }" class="text-primary hover:text-accent">
-          {{ item.category.name }}
+        <RouterLink :to="{ name: 'CategoryDetail', params: { slug: itemCategory.slug } }" class="text-primary hover:text-accent">
+          {{ itemCategory.name }}
         </RouterLink>
       </div>
     </div>
 
     <!-- Category link (desktop) -->
-    <div v-if="item.category" class="mt-6 hidden text-sm text-primary/60 lg:block">
+    <div v-if="itemCategory" class="mt-6 hidden text-sm text-primary/60 lg:block">
       Категория:
-      <RouterLink :to="{ name: 'CategoryDetail', params: { slug: item.category.slug } }" class="text-primary hover:text-accent">
-        {{ item.category.name }}
+      <RouterLink :to="{ name: 'CategoryDetail', params: { slug: itemCategory.slug } }" class="text-primary hover:text-accent">
+        {{ itemCategory.name }}
       </RouterLink>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useStore } from 'vuex'
 import ItemMedia from '@/components/items/ItemMedia.vue'
 
 const props = defineProps({
   item: {
     type: Object,
     required: true
+  }
+})
+
+const store = useStore()
+
+// Backend ItemResponse has no nested category object — only category_id.
+// Resolve the category from the categories store so we can show its name/slug.
+const itemCategory = computed(() => {
+  if (!props.item.category_id) return null
+  return store.getters['categories/getCategoryById'](props.item.category_id) || null
+})
+
+// Ensure the categories list is available for the lookup above.
+onMounted(() => {
+  const cats = store.getters['categories/categories']
+  if (!cats || cats.length === 0) {
+    store.dispatch('categories/fetchCategories').catch(() => {})
   }
 })
 

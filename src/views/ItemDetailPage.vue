@@ -60,7 +60,7 @@ const handleEdit = () => {
 
 const handleToggleVisibility = async () => {
   const newStatus = !currentItem.value.is_hidden
-  const result = await toggleItemVisibility(currentItem.value.slug, newStatus)
+  const result = await toggleItemVisibility(currentItem.value.id, newStatus)
   if (result.success) {
     showSuccess(`Объект ${newStatus ? 'скрыт' : 'показан'}`)
     await fetchItemBySlug(currentItem.value.slug)
@@ -78,7 +78,7 @@ const handleDelete = async () => {
   })
 
   if (confirmed) {
-    const result = await deleteItem(currentItem.value.slug)
+    const result = await deleteItem(currentItem.value.id)
     if (result.success) {
       showSuccess('Объект удалён')
       router.push({ name: 'Home' })
