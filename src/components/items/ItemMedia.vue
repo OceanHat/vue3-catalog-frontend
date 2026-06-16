@@ -3,10 +3,11 @@
     <!-- Photo -->
     <div v-if="mode === 'photo'" class="flex items-center justify-center">
       <img
-        v-if="item.image_url"
+        v-if="item.image_url && !imageFailed"
         :src="item.image_url"
         :alt="item.name"
-        class="max-h-[60vh] w-auto max-w-full object-contain drop-shadow-xl"
+        class="max-h-[60vh] w-auto max-w-full rounded-xl object-contain drop-shadow-xl"
+        @error="imageFailed = true"
       />
       <div v-else class="flex h-72 w-full items-center justify-center rounded-xl bg-gradient-to-br from-ink-700 to-ink-800">
         <span class="font-display text-6xl text-primary/40">{{ (item.name || '?').charAt(0) }}</span>
@@ -44,7 +45,9 @@
 </template>
 
 <script setup>
-defineProps({
+import { ref, watch } from 'vue'
+
+const props = defineProps({
   item: {
     type: Object,
     required: true
@@ -54,4 +57,8 @@ defineProps({
     default: 'photo' // 'photo' | 'map' | 'model'
   }
 })
+
+// Fall back to the initial-letter placeholder if the image fails to load.
+const imageFailed = ref(false)
+watch(() => props.item?.id, () => { imageFailed.value = false })
 </script>

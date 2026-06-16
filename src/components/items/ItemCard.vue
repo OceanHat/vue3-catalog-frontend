@@ -12,11 +12,12 @@
       <!-- Image area -->
       <div class="aspect-[4/3] w-full overflow-hidden bg-ink-700">
         <img
-          v-if="item.image_url"
-          :src="item.image_url"
+          v-if="imageSrc && !imageFailed"
+          :src="imageSrc"
           :alt="item.name"
           class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
+          @error="imageFailed = true"
         />
         <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-ink-700 to-ink-800">
           <span class="font-display text-4xl text-primary/40">{{ (item.name || '?').charAt(0) }}</span>
@@ -43,9 +44,10 @@
 </template>
 
 <script setup>
+import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
-defineProps({
+const props = defineProps({
   item: {
     type: Object,
     required: true
@@ -57,4 +59,11 @@ defineProps({
 })
 
 defineEmits(['edit', 'delete', 'toggle-visibility'])
+
+// Grid tiles use the lightweight thumbnail; fall back to the full image.
+const imageSrc = computed(() => props.item.thumbnail_url || props.item.image_url || null)
+const imageFailed = ref(false)
+
+// Reset the error flag if the item (and therefore its image) changes.
+watch(() => props.item?.id, () => { imageFailed.value = false })
 </script>
