@@ -33,13 +33,17 @@
               />
             </div>
             <div>
-              <label class="mb-1 block text-xs font-medium text-primary/50">Ссылка на изображение</label>
-              <input
-                v-model="editData.image_url"
-                type="text"
-                class="w-full rounded-lg border border-primary/40 bg-ink-800 px-3 py-2 text-sm text-primary outline-none focus:border-primary"
-                placeholder="https://example.com/image.jpg"
-              />
+              <label class="mb-1 block text-xs font-medium text-primary/50">Фотография категории</label>
+              <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-primary/40 bg-ink-800 px-4 py-3 text-sm text-primary/60 transition hover:border-primary/70 hover:text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                <span>{{ selectedFileName || 'Выбрать файл...' }}</span>
+                <input type="file" accept="image/*" class="hidden" @change="onFileChange" />
+              </label>
+              <div v-if="previewUrl" class="mt-2">
+                <img :src="previewUrl" class="max-h-32 rounded-lg object-contain" alt="preview" />
+              </div>
             </div>
           </div>
 
@@ -57,7 +61,7 @@
                 <LoadingSpinner v-if="formSubmitting" size="sm" color="white" class="mr-1 inline" />
                 Сохранить
               </button>
-              <button @click="cancelEdit" class="btn-secondary">Отмена</button>
+              <button @click="cancelEdit" :disabled="formSubmitting" class="btn-secondary">Отмена</button>
             </template>
           </div>
         </div>
@@ -75,12 +79,7 @@
           v-else-if="items.length > 0"
           class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-5 lg:grid-cols-4"
         >
-          <ItemCard
-            v-for="item in items"
-            :key="item.id"
-            :item="item"
-            :show-admin-actions="isAdmin"
-          />
+          <ItemCard v-for="item in items" :key="item.id" :item="item" :show-admin-actions="isAdmin" />
         </div>
 
         <div v-else class="py-16 text-center">
@@ -95,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ref, reactive, onMounted, computed, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppFooter from '@/components/common/AppFooter.vue'
@@ -107,6 +106,7 @@ import { useCategories } from '@/composables/useCategories'
 import { useItems } from '@/composables/useItems'
 import { useAuth } from '@/composables/useAuth'
 import { useNotification } from '@/composables/useNotification'
+import categoryService from '@/services/categoryService'
 
 const route = useRoute()
 const router = useRouter()
@@ -117,7 +117,10 @@ const { showSuccess, showError, showConfirmDialog } = useNotification()
 
 const isEditing = ref(false)
 const formSubmitting = ref(false)
-const editData = reactive({ name: '', description: '', image_url: '' })
+const selectedImageFile = ref(null)
+const previewUrl = ref(null)
+const selectedFileName = ref('')
+const editData = reactive({ name: '', description: '' })
 
 const headerTitle = computed(() =>
   isEditing.value ? (editData.name || 'Редактирование') : (currentCategory.value?.name || 'Народная')
@@ -125,43 +128,75 @@ const headerTitle = computed(() =>
 
 const load = async (slug) => {
   await fetchCategoryBySlug(slug)
-  if (currentCategory.value?.id) {
-    await fetchItemsByCategory(currentCategory.value.id)
-  }
+  if (currentCategory.value?.id) await fetchItemsByCategory(currentCategory.value.id)
 }
 
 onMounted(() => load(route.params.slug))
+watch(() => route.params.slug, (slug) => { if (slug) load(slug) })
 
-watch(() => route.params.slug, (slug) => {
-  if (slug) load(slug)
+onUnmounted(() => {
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
 })
+
+const onFileChange = (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+  previewUrl.value = URL.createObjectURL(file)
+  selectedFileName.value = file.name
+  selectedImageFile.value = file
+}
 
 const startEdit = () => {
   editData.name = currentCategory.value.name || ''
   editData.description = currentCategory.value.description || ''
-  editData.image_url = currentCategory.value.image_url || ''
+  selectedImageFile.value = null
+  previewUrl.value = null
+  selectedFileName.value = ''
   isEditing.value = true
 }
 
 const cancelEdit = () => {
   isEditing.value = false
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+  previewUrl.value = null
+  selectedImageFile.value = null
 }
 
 const saveEdit = async () => {
   formSubmitting.value = true
-  const result = await updateCategory(currentCategory.value.id, {
-    name: editData.name,
-    description: editData.description,
-    image_url: editData.image_url
-  })
-  if (result.success) {
-    showSuccess('Категория успешно обновлена')
-    isEditing.value = false
-    await load(route.params.slug)
-  } else {
-    showError(result.error || 'Не удалось обновить категорию')
+  try {
+    // 1. Upload image if selected
+    if (selectedImageFile.value) {
+      const uploadResult = await categoryService.uploadCategoryImage(currentCategory.value.id, selectedImageFile.value)
+      if (!uploadResult?.success) {
+        showError('Не удалось загрузить изображение')
+        formSubmitting.value = false
+        return
+      }
+    }
+
+    // 2. Update text fields
+    const result = await updateCategory(currentCategory.value.id, {
+      name: editData.name,
+      description: editData.description
+    })
+
+    if (result.success) {
+      showSuccess('Категория успешно обновлена')
+      isEditing.value = false
+      selectedImageFile.value = null
+      if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+      previewUrl.value = null
+      await load(route.params.slug)
+    } else {
+      showError(result.error || 'Не удалось обновить категорию')
+    }
+  } catch (e) {
+    showError(e?.message || 'Ошибка при сохранении')
+  } finally {
+    formSubmitting.value = false
   }
-  formSubmitting.value = false
 }
 
 const handleDelete = async () => {
