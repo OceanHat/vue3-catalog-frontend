@@ -9,16 +9,65 @@
       </div>
 
       <div v-else-if="currentCategory" class="container mx-auto px-3 py-6 md:px-6 md:py-8">
-        <!-- Optional description + admin controls -->
-        <div v-if="currentCategory.description || isAdmin" class="mb-6 flex items-start justify-between gap-4">
-          <p class="max-w-3xl text-primary/70">{{ currentCategory.description }}</p>
-          <div v-if="isAdmin" class="flex shrink-0 gap-2">
-            <button @click="handleEdit" class="btn-secondary">Изменить</button>
-            <button @click="handleDelete" class="btn-danger">Удалить</button>
+
+        <!-- Admin controls row -->
+        <div v-if="isAdmin" class="mb-4 flex items-start justify-between gap-4">
+          <!-- Inline edit fields -->
+          <div v-if="isEditing" class="flex flex-1 flex-col gap-3">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-primary/50">Название</label>
+              <input
+                v-model="editData.name"
+                type="text"
+                class="w-full rounded-lg border border-primary/40 bg-ink-800 px-4 py-2 text-xl font-bold text-primary outline-none focus:border-primary"
+                placeholder="Название категории"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-primary/50">Описание</label>
+              <textarea
+                v-model="editData.description"
+                rows="3"
+                class="w-full resize-y rounded-lg border border-primary/40 bg-ink-800 px-3 py-2 text-sm text-primary outline-none focus:border-primary"
+                placeholder="Описание категории"
+              />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-primary/50">Ссылка на изображение</label>
+              <input
+                v-model="editData.image_url"
+                type="text"
+                class="w-full rounded-lg border border-primary/40 bg-ink-800 px-3 py-2 text-sm text-primary outline-none focus:border-primary"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+          </div>
+
+          <!-- View mode: show description text -->
+          <p v-else class="max-w-3xl text-primary/70">{{ currentCategory.description }}</p>
+
+          <!-- Buttons -->
+          <div class="flex shrink-0 flex-col gap-2">
+            <template v-if="!isEditing">
+              <button @click="startEdit" class="btn-secondary">Изменить</button>
+              <button @click="handleDelete" class="btn-danger">Удалить</button>
+            </template>
+            <template v-else>
+              <button @click="saveEdit" :disabled="formSubmitting" class="btn-primary">
+                <LoadingSpinner v-if="formSubmitting" size="sm" color="white" class="mr-1 inline" />
+                Сохранить
+              </button>
+              <button @click="cancelEdit" class="btn-secondary">Отмена</button>
+            </template>
           </div>
         </div>
 
-        <!-- Items grid: 4 columns on desktop, like the "Народная" mockup -->
+        <!-- Description for non-admin view -->
+        <div v-else-if="currentCategory.description" class="mb-6">
+          <p class="max-w-3xl text-primary/70">{{ currentCategory.description }}</p>
+        </div>
+
+        <!-- Items grid -->
         <LoadingSpinner v-if="itemsLoading" color="primary" />
         <ErrorMessage v-else-if="itemsError" :message="itemsError" />
 
@@ -40,26 +89,13 @@
       </div>
     </main>
 
-    <!-- Edit Modal -->
-    <div v-if="showEditForm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
-        <h2 class="mb-6 text-2xl font-bold">Редактировать категорию</h2>
-        <CategoryForm
-          :category="currentCategory"
-          :submitting="formSubmitting"
-          @submit="handleCategorySubmit"
-          @cancel="showEditForm = false"
-        />
-      </div>
-    </div>
-
     <AppFooter />
     <ConfirmDialog />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppFooter from '@/components/common/AppFooter.vue'
@@ -67,7 +103,6 @@ import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import ErrorMessage from '@/components/common/ErrorMessage.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import ItemCard from '@/components/items/ItemCard.vue'
-import CategoryForm from '@/components/categories/CategoryForm.vue'
 import { useCategories } from '@/composables/useCategories'
 import { useItems } from '@/composables/useItems'
 import { useAuth } from '@/composables/useAuth'
@@ -80,10 +115,13 @@ const { items, loading: itemsLoading, error: itemsError, fetchItemsByCategory } 
 const { isAdmin } = useAuth()
 const { showSuccess, showError, showConfirmDialog } = useNotification()
 
-const showEditForm = ref(false)
+const isEditing = ref(false)
 const formSubmitting = ref(false)
+const editData = reactive({ name: '', description: '', image_url: '' })
 
-const headerTitle = computed(() => currentCategory.value?.name || 'Народная')
+const headerTitle = computed(() =>
+  isEditing.value ? (editData.name || 'Редактирование') : (currentCategory.value?.name || 'Народная')
+)
 
 const load = async (slug) => {
   await fetchCategoryBySlug(slug)
@@ -98,16 +136,27 @@ watch(() => route.params.slug, (slug) => {
   if (slug) load(slug)
 })
 
-const handleEdit = () => {
-  showEditForm.value = true
+const startEdit = () => {
+  editData.name = currentCategory.value.name || ''
+  editData.description = currentCategory.value.description || ''
+  editData.image_url = currentCategory.value.image_url || ''
+  isEditing.value = true
 }
 
-const handleCategorySubmit = async (categoryData) => {
+const cancelEdit = () => {
+  isEditing.value = false
+}
+
+const saveEdit = async () => {
   formSubmitting.value = true
-  const result = await updateCategory(currentCategory.value.id, categoryData)
+  const result = await updateCategory(currentCategory.value.id, {
+    name: editData.name,
+    description: editData.description,
+    image_url: editData.image_url
+  })
   if (result.success) {
     showSuccess('Категория успешно обновлена')
-    showEditForm.value = false
+    isEditing.value = false
     await load(route.params.slug)
   } else {
     showError(result.error || 'Не удалось обновить категорию')
@@ -122,7 +171,6 @@ const handleDelete = async () => {
     confirmText: 'Удалить',
     cancelText: 'Отмена'
   })
-
   if (confirmed) {
     const result = await deleteCategory(currentCategory.value.id)
     if (result.success) {
