@@ -40,13 +40,26 @@
       </div>
     </main>
 
+    <!-- Edit Modal -->
+    <div v-if="showEditForm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
+        <h2 class="mb-6 text-2xl font-bold">Редактировать категорию</h2>
+        <CategoryForm
+          :category="currentCategory"
+          :submitting="formSubmitting"
+          @submit="handleCategorySubmit"
+          @cancel="showEditForm = false"
+        />
+      </div>
+    </div>
+
     <AppFooter />
     <ConfirmDialog />
   </div>
 </template>
 
 <script setup>
-import { onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppFooter from '@/components/common/AppFooter.vue'
@@ -54,6 +67,7 @@ import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import ErrorMessage from '@/components/common/ErrorMessage.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import ItemCard from '@/components/items/ItemCard.vue'
+import CategoryForm from '@/components/categories/CategoryForm.vue'
 import { useCategories } from '@/composables/useCategories'
 import { useItems } from '@/composables/useItems'
 import { useAuth } from '@/composables/useAuth'
@@ -61,10 +75,13 @@ import { useNotification } from '@/composables/useNotification'
 
 const route = useRoute()
 const router = useRouter()
-const { currentCategory, loading: categoryLoading, error: categoryError, fetchCategoryBySlug, deleteCategory } = useCategories()
+const { currentCategory, loading: categoryLoading, error: categoryError, fetchCategoryBySlug, updateCategory, deleteCategory } = useCategories()
 const { items, loading: itemsLoading, error: itemsError, fetchItemsByCategory } = useItems()
 const { isAdmin } = useAuth()
 const { showSuccess, showError, showConfirmDialog } = useNotification()
+
+const showEditForm = ref(false)
+const formSubmitting = ref(false)
 
 const headerTitle = computed(() => currentCategory.value?.name || 'Народная')
 
@@ -77,13 +94,25 @@ const load = async (slug) => {
 
 onMounted(() => load(route.params.slug))
 
-// Re-load when navigating between categories via the nav menu.
 watch(() => route.params.slug, (slug) => {
   if (slug) load(slug)
 })
 
 const handleEdit = () => {
-  showError('Редактирование будет доступно в панели администратора')
+  showEditForm.value = true
+}
+
+const handleCategorySubmit = async (categoryData) => {
+  formSubmitting.value = true
+  const result = await updateCategory(currentCategory.value.id, categoryData)
+  if (result.success) {
+    showSuccess('Категория успешно обновлена')
+    showEditForm.value = false
+    await load(route.params.slug)
+  } else {
+    showError(result.error || 'Не удалось обновить категорию')
+  }
+  formSubmitting.value = false
 }
 
 const handleDelete = async () => {
