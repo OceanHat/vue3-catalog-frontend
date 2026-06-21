@@ -22,13 +22,27 @@
       </div>
     </main>
 
+    <!-- Edit Modal -->
+    <div v-if="showEditForm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
+        <h2 class="mb-6 text-2xl font-bold">Редактировать объект</h2>
+        <ItemForm
+          :item="currentItem"
+          :categories="categories"
+          :submitting="formSubmitting"
+          @submit="handleItemSubmit"
+          @cancel="showEditForm = false"
+        />
+      </div>
+    </div>
+
     <AppFooter />
     <ConfirmDialog />
   </div>
 </template>
 
 <script setup>
-import { onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppFooter from '@/components/common/AppFooter.vue'
@@ -36,26 +50,48 @@ import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import ErrorMessage from '@/components/common/ErrorMessage.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import ItemDetail from '@/components/items/ItemDetail.vue'
+import ItemForm from '@/components/items/ItemForm.vue'
 import { useItems } from '@/composables/useItems'
+import { useCategories } from '@/composables/useCategories'
 import { useAuth } from '@/composables/useAuth'
 import { useNotification } from '@/composables/useNotification'
 
 const route = useRoute()
 const router = useRouter()
-const { currentItem, loading, error, fetchItemBySlug, deleteItem, toggleItemVisibility } = useItems()
+const { currentItem, loading, error, fetchItemBySlug, updateItem, deleteItem, toggleItemVisibility } = useItems()
+const { categories, fetchCategories } = useCategories()
 const { isAdmin } = useAuth()
 const { showSuccess, showError, showConfirmDialog } = useNotification()
 
+const showEditForm = ref(false)
+const formSubmitting = ref(false)
+
 const headerTitle = computed(() => currentItem.value?.name || 'Народная')
 
-onMounted(() => fetchItemBySlug(route.params.slug))
+onMounted(async () => {
+  await fetchItemBySlug(route.params.slug)
+  await fetchCategories()
+})
 
 watch(() => route.params.slug, (slug) => {
   if (slug) fetchItemBySlug(slug)
 })
 
 const handleEdit = () => {
-  showError('Редактирование доступно в панели администратора')
+  showEditForm.value = true
+}
+
+const handleItemSubmit = async (itemData) => {
+  formSubmitting.value = true
+  const result = await updateItem(currentItem.value.id, itemData)
+  if (result.success) {
+    showSuccess('Объект успешно обновлён')
+    showEditForm.value = false
+    await fetchItemBySlug(route.params.slug)
+  } else {
+    showError(result.error || 'Не удалось обновить объект')
+  }
+  formSubmitting.value = false
 }
 
 const handleToggleVisibility = async () => {
