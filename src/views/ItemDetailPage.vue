@@ -77,6 +77,7 @@ const headerTitle = computed(() =>
 
 onMounted(() => fetchItemBySlug(route.params.slug))
 
+// Only refetch when slug in URL changes (e.g. after redirect)
 watch(() => route.params.slug, (slug) => {
   if (slug) fetchItemBySlug(slug)
 })
@@ -109,7 +110,7 @@ const saveEdit = async () => {
       }
     }
 
-    // 2. Update text fields
+    // 2. Update text fields — backend may auto-generate a new slug from the name
     const result = await updateItem(currentItem.value.id, {
       name: editData.name,
       description: editData.description,
@@ -121,7 +122,14 @@ const saveEdit = async () => {
       showSuccess('Объект успешно обновлён')
       isEditing.value = false
       selectedImageFile.value = null
-      await fetchItemBySlug(route.params.slug)
+
+      const newSlug = result.item?.slug
+      if (newSlug && newSlug !== route.params.slug) {
+        // Slug changed — navigate to new URL (watch will refetch)
+        router.replace({ name: 'ItemDetail', params: { slug: newSlug } })
+      } else {
+        await fetchItemBySlug(route.params.slug)
+      }
     } else {
       showError(result.error || 'Не удалось обновить объект')
     }
