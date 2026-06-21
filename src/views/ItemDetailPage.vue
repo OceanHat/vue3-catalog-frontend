@@ -23,7 +23,7 @@
               <LoadingSpinner v-if="formSubmitting" size="sm" color="white" class="mr-1 inline" />
               Сохранить
             </button>
-            <button @click="cancelEdit" class="btn-secondary">Отмена</button>
+            <button @click="cancelEdit" :disabled="formSubmitting" class="btn-secondary">Отмена</button>
           </template>
         </div>
 
@@ -32,6 +32,7 @@
           :is-editing="isEditing"
           :edit-data="editData"
           @update:edit-data="Object.assign(editData, $event)"
+          @update:image-file="selectedImageFile = $event"
         />
       </div>
     </main>
@@ -53,6 +54,7 @@ import ItemDetail from '@/components/items/ItemDetail.vue'
 import { useItems } from '@/composables/useItems'
 import { useAuth } from '@/composables/useAuth'
 import { useNotification } from '@/composables/useNotification'
+import itemService from '@/services/itemService'
 
 const route = useRoute()
 const router = useRouter()
@@ -62,10 +64,10 @@ const { showSuccess, showError, showConfirmDialog } = useNotification()
 
 const isEditing = ref(false)
 const formSubmitting = ref(false)
+const selectedImageFile = ref(null)
 const editData = reactive({
   name: '',
   description: '',
-  picture_url: '',
   additional_data: {}
 })
 
@@ -82,34 +84,52 @@ watch(() => route.params.slug, (slug) => {
 const startEdit = () => {
   editData.name = currentItem.value.name || ''
   editData.description = currentItem.value.description || ''
-  editData.picture_url = currentItem.value.picture_url || ''
   editData.additional_data = currentItem.value.additional_data
     ? JSON.parse(JSON.stringify(currentItem.value.additional_data))
     : {}
+  selectedImageFile.value = null
   isEditing.value = true
 }
 
 const cancelEdit = () => {
   isEditing.value = false
+  selectedImageFile.value = null
 }
 
 const saveEdit = async () => {
   formSubmitting.value = true
-  const result = await updateItem(currentItem.value.id, {
-    name: editData.name,
-    description: editData.description,
-    picture_url: editData.picture_url,
-    category_id: currentItem.value.category_id,
-    additional_data: editData.additional_data
-  })
-  if (result.success) {
-    showSuccess('Объект успешно обновлён')
-    isEditing.value = false
-    await fetchItemBySlug(route.params.slug)
-  } else {
-    showError(result.error || 'Не удалось обновить объект')
+  try {
+    // 1. Upload new image if selected
+    if (selectedImageFile.value) {
+      const uploadResult = await itemService.uploadItemImage(currentItem.value.id, selectedImageFile.value)
+      if (!uploadResult?.success) {
+        showError('Не удалось загрузить изображение')
+        formSubmitting.value = false
+        return
+      }
+    }
+
+    // 2. Update text fields
+    const result = await updateItem(currentItem.value.id, {
+      name: editData.name,
+      description: editData.description,
+      category_id: currentItem.value.category_id,
+      additional_data: editData.additional_data
+    })
+
+    if (result.success) {
+      showSuccess('Объект успешно обновлён')
+      isEditing.value = false
+      selectedImageFile.value = null
+      await fetchItemBySlug(route.params.slug)
+    } else {
+      showError(result.error || 'Не удалось обновить объект')
+    }
+  } catch (e) {
+    showError(e?.message || 'Ошибка при сохранении')
+  } finally {
+    formSubmitting.value = false
   }
-  formSubmitting.value = false
 }
 
 const handleToggleVisibility = async () => {
