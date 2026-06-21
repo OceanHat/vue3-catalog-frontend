@@ -12,33 +12,20 @@
 
         <!-- Admin controls row -->
         <div v-if="isAdmin" class="mb-4 flex items-start justify-between gap-4">
-          <!-- Inline edit fields -->
           <div v-if="isEditing" class="flex flex-1 flex-col gap-3">
             <div>
               <label class="mb-1 block text-xs font-medium text-primary/50">Название</label>
-              <input
-                v-model="editData.name"
-                type="text"
-                class="w-full rounded-lg border border-primary/40 bg-ink-800 px-4 py-2 text-xl font-bold text-primary outline-none focus:border-primary"
-                placeholder="Название категории"
-              />
+              <input v-model="editData.name" type="text" class="w-full rounded-lg border border-primary/40 bg-ink-800 px-4 py-2 text-xl font-bold text-primary outline-none focus:border-primary" placeholder="Название категории" />
             </div>
             <div>
               <label class="mb-1 block text-xs font-medium text-primary/50">Описание</label>
-              <textarea
-                v-model="editData.description"
-                rows="3"
-                class="w-full resize-y rounded-lg border border-primary/40 bg-ink-800 px-3 py-2 text-sm text-primary outline-none focus:border-primary"
-                placeholder="Описание категории"
-              />
+              <textarea v-model="editData.description" rows="3" class="w-full resize-y rounded-lg border border-primary/40 bg-ink-800 px-3 py-2 text-sm text-primary outline-none focus:border-primary" placeholder="Описание категории" />
             </div>
             <div>
               <label class="mb-1 block text-xs font-medium text-primary/50">Фотография категории</label>
               <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-primary/40 bg-ink-800 px-4 py-3 text-sm text-primary/60 transition hover:border-primary/70 hover:text-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                <span>{{ selectedFileName || 'Выбрать файл...' }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                <span>{{ selectedFileName || 'Выбрать файм...' }}</span>
                 <input type="file" accept="image/*" class="hidden" @change="onFileChange" />
               </label>
               <div v-if="previewUrl" class="mt-2">
@@ -47,10 +34,8 @@
             </div>
           </div>
 
-          <!-- View mode: show description text -->
           <p v-else class="max-w-3xl text-primary/70">{{ currentCategory.description }}</p>
 
-          <!-- Buttons -->
           <div class="flex shrink-0 flex-col gap-2">
             <template v-if="!isEditing">
               <button @click="startEdit" class="btn-secondary">Изменить</button>
@@ -66,22 +51,15 @@
           </div>
         </div>
 
-        <!-- Description for non-admin view -->
         <div v-else-if="currentCategory.description" class="mb-6">
           <p class="max-w-3xl text-primary/70">{{ currentCategory.description }}</p>
         </div>
 
-        <!-- Items grid -->
         <LoadingSpinner v-if="itemsLoading" color="primary" />
         <ErrorMessage v-else-if="itemsError" :message="itemsError" />
-
-        <div
-          v-else-if="items.length > 0"
-          class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-5 lg:grid-cols-4"
-        >
+        <div v-else-if="items.length > 0" class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-5 lg:grid-cols-4">
           <ItemCard v-for="item in items" :key="item.id" :item="item" :show-admin-actions="isAdmin" />
         </div>
-
         <div v-else class="py-16 text-center">
           <p class="font-display text-lg text-primary/50">В этой категории пока нет объектов</p>
         </div>
@@ -132,6 +110,8 @@ const load = async (slug) => {
 }
 
 onMounted(() => load(route.params.slug))
+
+// Refetch when slug in URL changes (after redirect)
 watch(() => route.params.slug, (slug) => { if (slug) load(slug) })
 
 onUnmounted(() => {
@@ -176,7 +156,7 @@ const saveEdit = async () => {
       }
     }
 
-    // 2. Update text fields
+    // 2. Update text fields — backend may auto-generate a new slug from the name
     const result = await updateCategory(currentCategory.value.id, {
       name: editData.name,
       description: editData.description
@@ -188,7 +168,14 @@ const saveEdit = async () => {
       selectedImageFile.value = null
       if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
       previewUrl.value = null
-      await load(route.params.slug)
+
+      const newSlug = result.category?.slug
+      if (newSlug && newSlug !== route.params.slug) {
+        // Slug changed — navigate to new URL (watch will reload data)
+        router.replace({ name: 'CategoryDetail', params: { slug: newSlug } })
+      } else {
+        await load(route.params.slug)
+      }
     } else {
       showError(result.error || 'Не удалось обновить категорию')
     }
