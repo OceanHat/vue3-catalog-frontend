@@ -31,7 +31,7 @@
           :item="currentItem"
           :is-editing="isEditing"
           :edit-data="editData"
-          @update:edit-data="editData = $event"
+          @update:edit-data="Object.assign(editData, $event)"
         />
       </div>
     </main>
@@ -51,7 +51,6 @@ import ErrorMessage from '@/components/common/ErrorMessage.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import ItemDetail from '@/components/items/ItemDetail.vue'
 import { useItems } from '@/composables/useItems'
-import { useCategories } from '@/composables/useItems'
 import { useAuth } from '@/composables/useAuth'
 import { useNotification } from '@/composables/useNotification'
 
