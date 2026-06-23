@@ -8,15 +8,15 @@
       >
         <div class="flex min-h-screen items-center justify-center p-4">
           <!-- Backdrop -->
-          <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+          <div class="fixed inset-0 bg-black/70 transition-opacity"></div>
 
           <!-- Dialog -->
-          <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 z-10">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          <div class="relative bg-[#322e2a] border border-primary/20 rounded-lg shadow-xl max-w-md w-full p-6 z-10">
+            <h3 class="text-lg font-display font-semibold text-primary mb-4">
               {{ title }}
             </h3>
             
-            <p class="text-gray-600 mb-6">
+            <p class="text-primary/70 mb-6">
               {{ message }}
             </p>
 

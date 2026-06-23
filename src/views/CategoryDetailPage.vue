@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-screen flex-col bg-ink-900">
+  <div class="flex min-h-screen flex-col bg-[#292623]">
     <AppHeader :title="headerTitle" />
 
     <main class="flex-1">
@@ -13,8 +13,7 @@
         <div v-if="currentCategory.description || isAdmin" class="mb-6 flex items-start justify-between gap-4">
           <p class="max-w-3xl text-primary/70">{{ currentCategory.description }}</p>
           <div v-if="isAdmin" class="flex shrink-0 gap-2">
-            <button @click="handleEdit" class="btn-secondary">Изменить</button>
-            <button @click="handleDelete" class="btn-danger">Удалить</button>
+            <RouterLink :to="{ name: 'AdminDashboard' }" class="btn-secondary">Управление</RouterLink>
           </div>
         </div>
 
@@ -30,7 +29,6 @@
             v-for="item in items"
             :key="item.id"
             :item="item"
-            :show-admin-actions="isAdmin"
           />
         </div>
 
@@ -47,7 +45,7 @@
 
 <script setup>
 import { onMounted, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, RouterLink } from 'vue-router'
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppFooter from '@/components/common/AppFooter.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
@@ -57,14 +55,11 @@ import ItemCard from '@/components/items/ItemCard.vue'
 import { useCategories } from '@/composables/useCategories'
 import { useItems } from '@/composables/useItems'
 import { useAuth } from '@/composables/useAuth'
-import { useNotification } from '@/composables/useNotification'
 
 const route = useRoute()
-const router = useRouter()
-const { currentCategory, loading: categoryLoading, error: categoryError, fetchCategoryBySlug, deleteCategory } = useCategories()
+const { currentCategory, loading: categoryLoading, error: categoryError, fetchCategoryBySlug } = useCategories()
 const { items, loading: itemsLoading, error: itemsError, fetchItemsByCategory } = useItems()
 const { isAdmin } = useAuth()
-const { showSuccess, showError, showConfirmDialog } = useNotification()
 
 const headerTitle = computed(() => currentCategory.value?.name || 'Народная')
 
@@ -81,27 +76,4 @@ onMounted(() => load(route.params.slug))
 watch(() => route.params.slug, (slug) => {
   if (slug) load(slug)
 })
-
-const handleEdit = () => {
-  showError('Редактирование будет доступно в панели администратора')
-}
-
-const handleDelete = async () => {
-  const confirmed = await showConfirmDialog({
-    title: 'Удалить категорию',
-    message: `Вы уверены, что хотите удалить «${currentCategory.value.name}»? Это действие необратимо.`,
-    confirmText: 'Удалить',
-    cancelText: 'Отмена'
-  })
-
-  if (confirmed) {
-    const result = await deleteCategory(currentCategory.value.id)
-    if (result.success) {
-      showSuccess('Категория удалена')
-      router.push({ name: 'CategoryList' })
-    } else {
-      showError(result.error || 'Не удалось удалить категорию')
-    }
-  }
-}
 </script>

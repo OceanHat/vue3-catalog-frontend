@@ -1,4 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Great+Vibes&family=Mulish:ital,wght@0,200..1000;1,200..1000&family=Tektur:wght@400..900&display=swap");
+/* Sci-fi display + body fonts */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600&display=swap');
 @import './custom.css';
 
 @tailwind base;
@@ -7,18 +8,14 @@
 
 /* Base styles */
 @layer base {
-  html, body, nav {
+  html, body {
     @apply antialiased text-primary;
     background-color: #292623;
-    font-family: 'Mulish', sans-serif, system-ui, sans-serif;
+    font-family: 'Exo 2', ui-sans-serif, system-ui, sans-serif;
   }
 
-  h1, h2, h3, .font-display, .font-tektur {
-    font-family: 'Tektur', ui-sans-serif, system-ui, sans-serif;
-    letter-spacing: 0.02em;
-  }
-  .font-cursive {
-    font-family: 'Great Vibes', cursive, system-ui, sans-serif;
+  h1, h2, h3, .font-display {
+    font-family: 'Orbitron', ui-sans-serif, system-ui, sans-serif;
     letter-spacing: 0.02em;
   }
 }
@@ -26,11 +23,11 @@
 /* Custom component styles */
 @layer components {
   .btn-primary {
-    @apply px-4 py-2 rounded-md font-display text-sm tracking-wide text-secondary bg-primary hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/60 transition-colors;
+    @apply px-4 py-2 rounded-md font-display text-sm tracking-wide text-[#292623] bg-primary hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/60 transition-colors;
   }
 
   .btn-secondary {
-    @apply px-4 py-2 rounded-md font-display text-sm tracking-wide text-primary bg-secondary border border-primary/50 hover:border-primary/70 hover:text-accent focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors;
+    @apply px-4 py-2 rounded-md font-display text-sm tracking-wide text-primary bg-primary/10 border border-primary/30 hover:border-primary/70 hover:text-accent focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors;
   }
 
   .btn-danger {
@@ -43,20 +40,20 @@
   }
 
   .pill-btn-muted {
-    @apply px-5 py-2 rounded-full font-display text-sm tracking-wide border border-primary/50 text-primary/40 bg-transparent cursor-default;
+    @apply px-5 py-2 rounded-full font-display text-sm tracking-wide border border-ink-600 text-primary/40 bg-transparent cursor-default;
   }
 
   .card {
-    @apply bg-secondary rounded-lg shadow-md p-6 transition-shadow;
+    @apply bg-primary/[0.06] rounded-lg shadow-md p-6 transition-shadow;
   }
 
   /* Bordered catalog tile (matches "Народная" grid mockup) */
   .catalog-tile {
-    @apply block rounded-2xl border-2 border-primary/70 bg-secondary overflow-hidden transition-all duration-200 hover:border-primary hover:shadow-glow;
+    @apply block rounded-2xl border-2 border-primary/70 bg-primary/[0.04] overflow-hidden transition-all duration-200 hover:border-primary hover:shadow-glow;
   }
 
   .input-field {
-    @apply w-full px-3 py-2 rounded-md bg-secondary border border-secondary/50 text-primary placeholder-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent;
+    @apply w-full px-3 py-2 rounded-md bg-primary/[0.06] border border-primary/25 text-primary placeholder-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent;
   }
 
   .input-error {
@@ -66,9 +63,4 @@
   .error-text {
     @apply text-red-400 text-sm mt-1;
   }
-}
-
-@theme {
-  --color-back: #292623;
-  --color-accent: #ffe5ff;
 }

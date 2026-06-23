@@ -10,7 +10,7 @@
       class="catalog-tile group"
     >
       <!-- Image area -->
-      <div class="aspect-[4/3] w-full overflow-hidden bg-ink-700">
+      <div class="aspect-[4/3] w-full overflow-hidden bg-primary/[0.04]">
         <img
           v-if="imageSrc && !imageFailed"
           :src="imageSrc"
@@ -19,7 +19,7 @@
           loading="lazy"
           @error="imageFailed = true"
         />
-        <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-ink-700 to-ink-800">
+        <div v-else class="flex h-full w-full items-center justify-center bg-primary/[0.04]">
           <span class="font-display text-4xl text-primary/40">{{ (item.name || '?').charAt(0) }}</span>
         </div>
       </div>
@@ -32,8 +32,8 @@
       </div>
     </RouterLink>
 
-    <!-- Admin actions -->
-    <div v-if="showAdminActions" class="mt-3 flex gap-2">
+    <!-- Admin actions (only rendered where explicitly enabled, e.g. admin panel) -->
+    <div v-if="showAdminActions" class="mt-3 flex flex-wrap gap-2">
       <button @click="$emit('edit', item)" class="btn-secondary text-xs">Изменить</button>
       <button @click="$emit('toggle-visibility', item)" class="btn-secondary text-xs">
         {{ item.is_hidden ? 'Показать' : 'Скрыть' }}
@@ -52,6 +52,8 @@ const props = defineProps({
     type: Object,
     required: true
   },
+  // Admin controls are off by default — the public catalog/category views
+  // must never render edit/hide/delete buttons.
   showAdminActions: {
     type: Boolean,
     default: false

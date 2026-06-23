@@ -9,7 +9,7 @@
         class="max-h-[60vh] w-auto max-w-full rounded-xl object-contain drop-shadow-xl"
         @error="imageFailed = true"
       />
-      <div v-else class="flex h-72 w-full items-center justify-center rounded-xl bg-gradient-to-br from-ink-700 to-ink-800">
+      <div v-else class="flex h-72 w-full items-center justify-center rounded-xl bg-primary/[0.04]">
         <span class="font-display text-6xl text-primary/40">{{ (item.name || '?').charAt(0) }}</span>
       </div>
     </div>
@@ -19,11 +19,11 @@
       <iframe
         v-if="item.map_url"
         :src="item.map_url"
-        class="h-[55vh] w-full rounded-xl border border-ink-600"
+        class="h-[55vh] w-full rounded-xl border border-primary/20"
         loading="lazy"
         referrerpolicy="no-referrer-when-downgrade"
       ></iframe>
-      <div v-else class="flex h-72 items-center justify-center rounded-xl border border-ink-600 text-primary/40">
+      <div v-else class="flex h-72 items-center justify-center rounded-xl border border-primary/20 text-primary/40">
         Карта недоступна
       </div>
     </div>
@@ -33,11 +33,11 @@
       <iframe
         v-if="item.model_url"
         :src="item.model_url"
-        class="h-[55vh] w-full rounded-xl border border-ink-600"
+        class="h-[55vh] w-full rounded-xl border border-primary/20"
         allow="autoplay; fullscreen; xr-spatial-tracking"
         loading="lazy"
       ></iframe>
-      <div v-else class="flex h-72 items-center justify-center rounded-xl border border-ink-600 text-primary/40">
+      <div v-else class="flex h-72 items-center justify-center rounded-xl border border-primary/20 text-primary/40">
         Модель недоступна
       </div>
     </div>

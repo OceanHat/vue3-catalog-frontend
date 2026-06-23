@@ -21,16 +21,36 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #1E1B16;
+  background: #211e1c;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3A352D;
+  background: #433e39;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #E9C7E6;
+  background: #ffe5ff;
+}
+
+/* ===== Moving (marquee) title on the item detail page ===== */
+.title-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+  animation: title-slide 14s linear infinite;
+}
+.title-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes title-slide {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title-marquee { animation: none; }
 }
 
 /* Nav menu transitions */

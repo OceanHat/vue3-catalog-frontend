@@ -4,7 +4,7 @@
     <ErrorMessage v-else-if="error" :message="error" />
     
     <div v-else-if="items.length > 0">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
         <ItemCard 
           v-for="item in items" 
           :key="item.id" 
@@ -22,28 +22,28 @@
           <button
             @click="$emit('page-change', pagination.page - 1)"
             :disabled="pagination.page === 1"
-            class="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            class="px-4 py-2 border border-primary/30 text-primary rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/10 transition-colors"
           >
-            Previous
+            Назад
           </button>
           
-          <span class="px-4 py-2 border border-gray-300 rounded-md bg-gray-50">
-            Page {{ pagination.page }} of {{ pagination.totalPages }}
+          <span class="px-4 py-2 border border-primary/30 rounded-md bg-primary/[0.06] text-primary">
+            Страница {{ pagination.page }} из {{ pagination.totalPages }}
           </span>
           
           <button
             @click="$emit('page-change', pagination.page + 1)"
             :disabled="pagination.page === pagination.totalPages"
-            class="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            class="px-4 py-2 border border-primary/30 text-primary rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/10 transition-colors"
           >
-            Next
+            Вперёд
           </button>
         </nav>
       </div>
     </div>
     
     <div v-else class="text-center py-12">
-      <p class="text-gray-500 text-lg">No items found</p>
+      <p class="text-primary/50 text-lg">Предметы не найдены</p>
     </div>
   </div>
 </template>

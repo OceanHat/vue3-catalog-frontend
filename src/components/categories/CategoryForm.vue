@@ -2,10 +2,10 @@
   <form @submit.prevent="handleSubmit" class="space-y-6">
     <ErrorMessage v-if="formError" :message="formError" :dismissible="true" @dismiss="formError = ''" />
 
-    <!-- Name -->
+    <!-- Название -->
     <div>
-      <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-        Name *
+      <label for="name" class="block text-sm font-medium text-primary/80 mb-1">
+        Название *
       </label>
       <input
         id="name"
@@ -14,60 +14,69 @@
         required
         class="input-field"
         :class="{ 'input-error': errors.name }"
-        placeholder="Enter category name"
+        placeholder="Введите название категории"
       />
       <p v-if="errors.name" class="error-text">{{ errors.name }}</p>
     </div>
 
-    <!-- Description -->
+    <!-- Slug (необязательно) -->
     <div>
-      <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
-        Description *
+      <label for="slug" class="block text-sm font-medium text-primary/80 mb-1">
+        Slug (необязательно)
+      </label>
+      <input
+        id="slug"
+        v-model="formData.slug"
+        type="text"
+        class="input-field"
+        placeholder="например: minerals"
+      />
+      <p class="text-xs text-primary/50 mt-1">Оставьте пустым для автогенерации.</p>
+    </div>
+
+    <!-- Описание -->
+    <div>
+      <label for="description" class="block text-sm font-medium text-primary/80 mb-1">
+        Описание
       </label>
       <textarea
         id="description"
         v-model="formData.description"
         rows="4"
-        required
         class="input-field"
-        :class="{ 'input-error': errors.description }"
-        placeholder="Enter category description"
+        placeholder="Введите описание категории"
       ></textarea>
-      <p v-if="errors.description" class="error-text">{{ errors.description }}</p>
     </div>
 
-    <!-- Image URL -->
-    <div>
-      <label for="image_url" class="block text-sm font-medium text-gray-700 mb-1">
-        Image URL
-      </label>
+    <!-- Скрыть категорию -->
+    <div class="flex items-center gap-2">
       <input
-        id="image_url"
-        v-model="formData.image_url"
-        type="url"
-        class="input-field"
-        :class="{ 'input-error': errors.image_url }"
-        placeholder="https://example.com/image.jpg"
+        id="cat_is_hidden"
+        v-model="formData.is_hidden"
+        type="checkbox"
+        class="h-4 w-4 rounded border-primary/40 bg-transparent text-primary focus:ring-primary"
       />
-      <p v-if="errors.image_url" class="error-text">{{ errors.image_url }}</p>
+      <label for="cat_is_hidden" class="text-sm font-medium text-primary/80">
+        Скрыть категорию (не показывать посетителям)
+      </label>
     </div>
 
-    <!-- Buttons -->
+    <!-- Кнопки -->
     <div class="flex justify-end space-x-3">
-      <button 
-        type="button" 
-        @click="$emit('cancel')" 
+      <button
+        type="button"
+        @click="$emit('cancel')"
         class="btn-secondary"
       >
-        Cancel
+        Отмена
       </button>
-      <button 
-        type="submit" 
-        :disabled="submitting" 
+      <button
+        type="submit"
+        :disabled="submitting"
         class="btn-primary flex items-center"
       >
         <LoadingSpinner v-if="submitting" size="sm" color="white" class="mr-2" />
-        <span>{{ isEdit ? 'Update' : 'Create' }} Category</span>
+        <span>{{ isEdit ? 'Сохранить' : 'Создать' }}</span>
       </button>
     </div>
   </form>
@@ -77,7 +86,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import ErrorMessage from '@/components/common/ErrorMessage.vue'
-import { isRequired, isValidUrl } from '@/utils/validators'
+import { isRequired } from '@/utils/validators'
 
 const props = defineProps({
   category: {
@@ -96,14 +105,13 @@ const isEdit = ref(!!props.category)
 
 const formData = reactive({
   name: '',
+  slug: '',
   description: '',
-  image_url: ''
+  is_hidden: false
 })
 
 const errors = reactive({
-  name: '',
-  description: '',
-  image_url: ''
+  name: ''
 })
 
 const formError = ref('')
@@ -111,29 +119,18 @@ const formError = ref('')
 onMounted(() => {
   if (props.category) {
     formData.name = props.category.name || ''
+    formData.slug = props.category.slug || ''
     formData.description = props.category.description || ''
-    formData.image_url = props.category.image_url || ''
+    formData.is_hidden = !!props.category.is_hidden
   }
 })
 
 const validateForm = () => {
   errors.name = ''
-  errors.description = ''
-  errors.image_url = ''
   let isValid = true
 
   if (!isRequired(formData.name)) {
-    errors.name = 'Name is required'
-    isValid = false
-  }
-
-  if (!isRequired(formData.description)) {
-    errors.description = 'Description is required'
-    isValid = false
-  }
-
-  if (formData.image_url && !isValidUrl(formData.image_url)) {
-    errors.image_url = 'Please enter a valid URL'
+    errors.name = 'Название обязательно'
     isValid = false
   }
 
@@ -142,11 +139,18 @@ const validateForm = () => {
 
 const handleSubmit = () => {
   formError.value = ''
-  
+
   if (!validateForm()) {
     return
   }
 
-  emit('submit', { ...formData })
+  const payload = {
+    name: formData.name,
+    description: formData.description || '',
+    is_hidden: formData.is_hidden
+  }
+  if (formData.slug) payload.slug = formData.slug
+
+  emit('submit', payload)
 }
 </script>
