@@ -1,9 +1,9 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <!-- Header -->
       <div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h2 class="mt-6 text-center text-3xl font-extrabold">
           Sign in to your account
         </h2>
       </div>
@@ -15,24 +15,24 @@
         <div class="rounded-md shadow-sm space-y-4">
           <!-- Username/Email -->
           <div>
-            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">
-              Username or Email
+            <label for="email" class="block text-sm font-medium mb-1">
+              Email
             </label>
             <input
-              id="username"
-              v-model="formData.username"
+              id="email"
+              v-model="formData.email"
               type="text"
               required
               class="input-field"
-              :class="{ 'input-error': errors.username }"
+              :class="{ 'input-error': errors.email }"
               placeholder="Enter your username or email"
             />
-            <p v-if="errors.username" class="error-text">{{ errors.username }}</p>
+            <p v-if="errors.email" class="error-text">{{ errors.email }}</p>
           </div>
 
           <!-- Password -->
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="password" class="block text-sm font-medium mb-1">
               Password
             </label>
             <input
@@ -62,7 +62,7 @@
 
         <!-- Additional Links -->
         <div class="text-center">
-          <router-link to="/" class="text-sm text-primary hover:text-blue-700">
+          <router-link to="/" class="text-sm text-primary hover:opacity-50">
             Back to Home
           </router-link>
         </div>
@@ -85,24 +85,24 @@ const { login, loading } = useAuth()
 const { showSuccess, showError } = useNotification()
 
 const formData = reactive({
-  username: '',
+  email: '',
   password: ''
 })
 
 const errors = reactive({
-  username: '',
+  email: '',
   password: ''
 })
 
 const formError = ref('')
 
 const validateForm = () => {
-  errors.username = ''
+  errors.email = ''
   errors.password = ''
   let isValid = true
 
-  if (!isRequired(formData.username)) {
-    errors.username = 'Username is required'
+  if (!isRequired(formData.email)) {
+    errors.email = 'Email is required'
     isValid = false
   }
 

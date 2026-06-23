@@ -11,29 +11,14 @@
       <div v-else-if="currentItem">
         <!-- Admin actions -->
         <div v-if="isAdmin" class="container mx-auto flex justify-end gap-2 px-4 pt-4">
-          <template v-if="!isEditing">
-            <button @click="startEdit" class="btn-secondary">Изменить</button>
-            <button @click="handleToggleVisibility" class="btn-secondary">
-              {{ currentItem.is_hidden ? 'Показать' : 'Скрыть' }}
-            </button>
-            <button @click="handleDelete" class="btn-danger">Удалить</button>
-          </template>
-          <template v-else>
-            <button @click="saveEdit" :disabled="formSubmitting" class="btn-primary">
-              <LoadingSpinner v-if="formSubmitting" size="sm" color="white" class="mr-1 inline" />
-              Сохранить
-            </button>
-            <button @click="cancelEdit" :disabled="formSubmitting" class="btn-secondary">Отмена</button>
-          </template>
+          <button @click="handleEdit" class="btn-secondary">Изменить</button>
+          <button @click="handleToggleVisibility" class="btn-secondary">
+            {{ currentItem.is_hidden ? 'Показать' : 'Скрыть' }}
+          </button>
+          <button @click="handleDelete" class="btn-danger">Удалить</button>
         </div>
 
-        <ItemDetail
-          :item="currentItem"
-          :is-editing="isEditing"
-          :edit-data="editData"
-          @update:edit-data="Object.assign(editData, $event)"
-          @update:image-file="selectedImageFile = $event"
-        />
+        <ItemDetail :item="currentItem" />
       </div>
     </main>
 
@@ -43,7 +28,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppFooter from '@/components/common/AppFooter.vue'
@@ -54,90 +39,23 @@ import ItemDetail from '@/components/items/ItemDetail.vue'
 import { useItems } from '@/composables/useItems'
 import { useAuth } from '@/composables/useAuth'
 import { useNotification } from '@/composables/useNotification'
-import itemService from '@/services/itemService'
 
 const route = useRoute()
 const router = useRouter()
-const { currentItem, loading, error, fetchItemBySlug, updateItem, deleteItem, toggleItemVisibility } = useItems()
+const { currentItem, loading, error, fetchItemBySlug, deleteItem, toggleItemVisibility } = useItems()
 const { isAdmin } = useAuth()
 const { showSuccess, showError, showConfirmDialog } = useNotification()
 
-const isEditing = ref(false)
-const formSubmitting = ref(false)
-const selectedImageFile = ref(null)
-const editData = reactive({
-  name: '',
-  description: '',
-  additional_data: {}
-})
-
-const headerTitle = computed(() =>
-  isEditing.value ? (editData.name || 'Редактирование') : (currentItem.value?.name || 'Народная')
-)
+const headerTitle = computed(() => currentItem.value?.name || 'Народная')
 
 onMounted(() => fetchItemBySlug(route.params.slug))
 
-// Only refetch when slug in URL changes (e.g. after redirect)
 watch(() => route.params.slug, (slug) => {
   if (slug) fetchItemBySlug(slug)
 })
 
-const startEdit = () => {
-  editData.name = currentItem.value.name || ''
-  editData.description = currentItem.value.description || ''
-  editData.additional_data = currentItem.value.additional_data
-    ? JSON.parse(JSON.stringify(currentItem.value.additional_data))
-    : {}
-  selectedImageFile.value = null
-  isEditing.value = true
-}
-
-const cancelEdit = () => {
-  isEditing.value = false
-  selectedImageFile.value = null
-}
-
-const saveEdit = async () => {
-  formSubmitting.value = true
-  try {
-    // 1. Upload new image if selected
-    if (selectedImageFile.value) {
-      const uploadResult = await itemService.uploadItemImage(currentItem.value.id, selectedImageFile.value)
-      if (!uploadResult?.success) {
-        showError('Не удалось загрузить изображение')
-        formSubmitting.value = false
-        return
-      }
-    }
-
-    // 2. Update text fields — backend may auto-generate a new slug from the name
-    const result = await updateItem(currentItem.value.id, {
-      name: editData.name,
-      description: editData.description,
-      category_id: currentItem.value.category_id,
-      additional_data: editData.additional_data
-    })
-
-    if (result.success) {
-      showSuccess('Объект успешно обновлён')
-      isEditing.value = false
-      selectedImageFile.value = null
-
-      const newSlug = result.item?.slug
-      if (newSlug && newSlug !== route.params.slug) {
-        // Slug changed — navigate to new URL (watch will refetch)
-        router.replace({ name: 'ItemDetail', params: { slug: newSlug } })
-      } else {
-        await fetchItemBySlug(route.params.slug)
-      }
-    } else {
-      showError(result.error || 'Не удалось обновить объект')
-    }
-  } catch (e) {
-    showError(e?.message || 'Ошибка при сохранении')
-  } finally {
-    formSubmitting.value = false
-  }
+const handleEdit = () => {
+  showError('Редактирование доступно в панели администратора')
 }
 
 const handleToggleVisibility = async () => {
@@ -158,6 +76,7 @@ const handleDelete = async () => {
     confirmText: 'Удалить',
     cancelText: 'Отмена'
   })
+
   if (confirmed) {
     const result = await deleteItem(currentItem.value.id)
     if (result.success) {

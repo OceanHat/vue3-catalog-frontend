@@ -29,8 +29,8 @@ export function useCategories() {
 
   const createCategory = async (categoryData) => {
     try {
-      const category = await store.dispatch('categories/createCategory', categoryData)
-      return { success: true, category }
+      await store.dispatch('categories/createCategory', categoryData)
+      return { success: true }
     } catch (err) {
       return { success: false, error: err.message }
     }
@@ -38,8 +38,8 @@ export function useCategories() {
 
   const updateCategory = async (id, categoryData) => {
     try {
-      const category = await store.dispatch('categories/updateCategory', { id, categoryData })
-      return { success: true, category }
+      await store.dispatch('categories/updateCategory', { id, categoryData })
+      return { success: true }
     } catch (err) {
       return { success: false, error: err.message }
     }
