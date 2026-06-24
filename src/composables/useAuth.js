@@ -23,26 +23,19 @@ export function useAuth() {
 
   const logout = async () => {
     await store.dispatch('auth/logout')
-    router.push({ name: 'Login' })
+    router.push({ name: 'Home' })
   }
 
-  const register = async (userData) => {
-    try {
-      await store.dispatch('auth/register', userData)
-      return { success: true }
-    } catch (err) {
-      return { success: false, error: err.message }
-    }
-  }
+  const isEditor = computed(() => store.getters['auth/isEditor'])
 
   return {
     user,
     isAuthenticated,
     isAdmin,
+    isEditor,
     loading,
     error,
     login,
-    logout,
-    register
+    logout
   }
 }

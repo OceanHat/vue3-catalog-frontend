@@ -1,41 +1,66 @@
+/* Sci-fi display + body fonts */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600&display=swap');
+@import './custom.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Base styles */
 @layer base {
-  body {
-    @apply antialiased;
+  html, body {
+    @apply antialiased text-primary;
+    background-color: #292623;
+    font-family: 'Exo 2', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: 'Orbitron', ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: 0.02em;
   }
 }
 
 /* Custom component styles */
 @layer components {
   .btn-primary {
-    @apply px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors;
+    @apply px-4 py-2 rounded-md font-display text-sm tracking-wide text-[#292623] bg-primary hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/60 transition-colors;
   }
-  
+
   .btn-secondary {
-    @apply px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors;
+    @apply px-4 py-2 rounded-md font-display text-sm tracking-wide text-primary bg-primary/10 border border-primary/30 hover:border-primary/70 hover:text-accent focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors;
   }
-  
+
   .btn-danger {
-    @apply px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors;
+    @apply px-4 py-2 rounded-md font-display text-sm tracking-wide text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors;
   }
-  
+
+  /* Pill button used on item detail (Фото / Карта / Модель) */
+  .pill-btn {
+    @apply px-5 py-2 rounded-full font-display text-sm tracking-wide border border-primary/70 text-primary bg-transparent hover:bg-primary/10 transition-colors;
+  }
+
+  .pill-btn-muted {
+    @apply px-5 py-2 rounded-full font-display text-sm tracking-wide border border-ink-600 text-primary/40 bg-transparent cursor-default;
+  }
+
   .card {
-    @apply bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow;
+    @apply bg-primary/[0.06] rounded-lg shadow-md p-6 transition-shadow;
   }
-  
+
+  /* Bordered catalog tile (matches "Народная" grid mockup) */
+  .catalog-tile {
+    @apply block rounded-2xl border-2 border-primary/70 bg-primary/[0.04] overflow-hidden transition-all duration-200 hover:border-primary hover:shadow-glow;
+  }
+
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    @apply w-full px-3 py-2 rounded-md bg-primary/[0.06] border border-primary/25 text-primary placeholder-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-transparent;
   }
-  
+
   .input-error {
     @apply border-red-500 focus:ring-red-500;
   }
-  
+
   .error-text {
-    @apply text-red-600 text-sm mt-1;
+    @apply text-red-400 text-sm mt-1;
   }
 }

@@ -21,14 +21,54 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #211e1c;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: #433e39;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #ffe5ff;
+}
+
+/* ===== Moving (marquee) title on the item detail page ===== */
+.title-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+  animation: title-slide 14s linear infinite;
+}
+.title-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes title-slide {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title-marquee { animation: none; }
+}
+
+/* Nav menu transitions */
+.nav-slide-enter-active,
+.nav-slide-leave-active {
+  transition: transform 0.28s ease, opacity 0.28s ease;
+}
+.nav-slide-enter-from,
+.nav-slide-leave-to {
+  transform: translateY(-12px);
+  opacity: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }

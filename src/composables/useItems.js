@@ -29,44 +29,50 @@ export function useItems() {
     }
   }
 
+  // Load every item belonging to a category (by numeric category_id).
+  const fetchItemsByCategory = async (categoryId) => {
+    try {
+      await store.dispatch('items/setCategoryFilter', categoryId)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  }
+
   const createItem = async (itemData) => {
     try {
-      await store.dispatch('items/createItem', itemData)
-      return { success: true }
+      const item = await store.dispatch('items/createItem', itemData)
+      return { success: true, item }
     } catch (err) {
       return { success: false, error: err.message }
     }
   }
 
-  const updateItem = async (slug, itemData) => {
+  const updateItem = async (id, itemData) => {
     try {
-      await store.dispatch('items/updateItem', { slug, itemData })
-      return { success: true }
+      const item = await store.dispatch('items/updateItem', { id, itemData })
+      return { success: true, item }
     } catch (err) {
       return { success: false, error: err.message }
     }
   }
 
-  const deleteItem = async (slug) => {
+  const deleteItem = async (id) => {
     try {
-      await store.dispatch('items/deleteItem', slug)
+      await store.dispatch('items/deleteItem', id)
       return { success: true }
     } catch (err) {
       return { success: false, error: err.message }
     }
   }
 
-  const toggleItemVisibility = async (slug, isHidden) => {
+  const toggleItemVisibility = async (id, isHidden) => {
     try {
-      await store.dispatch('items/toggleItemVisibility', { slug, isHidden })
+      await store.dispatch('items/toggleItemVisibility', { id, isHidden })
       return { success: true }
     } catch (err) {
       return { success: false, error: err.message }
     }
-  }
-
-  const setFilters = (newFilters) => {
-    store.dispatch('items/setFilters', newFilters)
   }
 
   return {
@@ -78,10 +84,10 @@ export function useItems() {
     filters,
     fetchItems,
     fetchItemBySlug,
+    fetchItemsByCategory,
     createItem,
     updateItem,
     deleteItem,
-    toggleItemVisibility,
-    setFilters
+    toggleItemVisibility
   }
 }

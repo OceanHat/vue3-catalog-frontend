@@ -1,23 +1,7 @@
-// Plugin to persist auth state to localStorage
+// Plugin to restore the auth session on app start.
+// Token persistence itself is handled inside the auth store mutations
+// (access_token / refresh_token are written to localStorage there).
 export default (store) => {
-  // Initialize auth from localStorage on store creation
+  // If an access token exists in localStorage, load the current user.
   store.dispatch('auth/initializeAuth')
-  
-  // Subscribe to mutations
-  store.subscribe((mutation, state) => {
-    // Persist auth state
-    if (mutation.type.startsWith('auth/')) {
-      if (state.auth.token) {
-        localStorage.setItem('token', state.auth.token)
-      } else {
-        localStorage.removeItem('token')
-      }
-      
-      if (state.auth.user) {
-        localStorage.setItem('user', JSON.stringify(state.auth.user))
-      } else {
-        localStorage.removeItem('user')
-      }
-    }
-  })
 }

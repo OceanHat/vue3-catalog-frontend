@@ -1,70 +1,59 @@
 <template>
-  <div class="card relative">
-    <!-- Hidden Badge -->
-    <div v-if="item.is_hidden" class="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-      Hidden
+  <div class="relative">
+    <!-- Hidden badge -->
+    <div v-if="item.is_hidden" class="absolute right-2 top-2 z-10 rounded bg-red-600 px-2 py-0.5 text-xs text-white">
+      Скрыто
     </div>
 
-    <router-link 
-      :to="{ name: 'ItemDetail', params: { slug: item.slug } }" 
-      class="block group"
+    <RouterLink
+      :to="{ name: 'ItemDetail', params: { slug: item.slug } }"
+      class="catalog-tile group"
     >
-      <div class="aspect-w-16 aspect-h-9 mb-4 bg-gray-200 rounded-md overflow-hidden">
-        <img 
-          v-if="item.image_url" 
-          :src="item.image_url" 
+      <!-- Image area -->
+      <div class="aspect-[4/3] w-full overflow-hidden bg-primary/[0.04]">
+        <img
+          v-if="imageSrc && !imageFailed"
+          :src="imageSrc"
           :alt="item.name"
-          class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+          class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"
+          @error="imageFailed = true"
         />
-        <div v-else class="flex items-center justify-center h-48 bg-gradient-to-br from-gray-300 to-gray-400">
-          <span class="text-4xl font-bold text-white">{{ item.name.charAt(0) }}</span>
+        <div v-else class="flex h-full w-full items-center justify-center bg-primary/[0.04]">
+          <span class="font-display text-4xl text-primary/40">{{ (item.name || '?').charAt(0) }}</span>
         </div>
       </div>
-      
-      <h3 class="text-xl font-semibold text-gray-900 mb-2 group-hover:text-primary transition-colors">
-        {{ item.name }}
-      </h3>
-      
-      <p class="text-gray-600 text-sm mb-4">
-        {{ truncateText(item.description, 100) }}
-      </p>
-      
-      <div class="flex items-center justify-between">
-        <span v-if="item.price" class="text-lg font-bold text-primary">
-          {{ formatCurrency(item.price) }}
-        </span>
-        <span class="text-sm text-gray-500">
-          {{ formatDate(item.created_at) }}
+
+      <!-- Caption: separated by a hairline, like the mockup -->
+      <div class="border-t-2 border-primary/70 px-3 py-2 text-center">
+        <span class="font-display text-base tracking-wide text-primary line-clamp-1">
+          {{ item.name || 'Описание' }}
         </span>
       </div>
-    </router-link>
+    </RouterLink>
 
-    <!-- Admin Actions -->
-    <div v-if="showAdminActions" class="mt-4 pt-4 border-t border-gray-200 flex space-x-2">
-      <button @click="$emit('edit', item)" class="btn-secondary text-sm">
-        Edit
+    <!-- Admin actions (only rendered where explicitly enabled, e.g. admin panel) -->
+    <div v-if="showAdminActions" class="mt-3 flex flex-wrap gap-2">
+      <button @click="$emit('edit', item)" class="btn-secondary text-xs">Изменить</button>
+      <button @click="$emit('toggle-visibility', item)" class="btn-secondary text-xs">
+        {{ item.is_hidden ? 'Показать' : 'Скрыть' }}
       </button>
-      <button 
-        @click="$emit('toggle-visibility', item)" 
-        class="btn-secondary text-sm"
-      >
-        {{ item.is_hidden ? 'Show' : 'Hide' }}
-      </button>
-      <button @click="$emit('delete', item)" class="btn-danger text-sm">
-        Delete
-      </button>
+      <button @click="$emit('delete', item)" class="btn-danger text-xs">Удалить</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { truncateText, formatDate, formatCurrency } from '@/utils/formatters'
+import { computed, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 
-defineProps({
+const props = defineProps({
   item: {
     type: Object,
     required: true
   },
+  // Admin controls are off by default — the public catalog/category views
+  // must never render edit/hide/delete buttons.
   showAdminActions: {
     type: Boolean,
     default: false
@@ -72,4 +61,11 @@ defineProps({
 })
 
 defineEmits(['edit', 'delete', 'toggle-visibility'])
+
+// Grid tiles use the lightweight thumbnail; fall back to the full image.
+const imageSrc = computed(() => props.item.thumbnail_url || props.item.image_url || null)
+const imageFailed = ref(false)
+
+// Reset the error flag if the item (and therefore its image) changes.
+watch(() => props.item?.id, () => { imageFailed.value = false })
 </script>
